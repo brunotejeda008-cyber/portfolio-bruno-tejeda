@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forrajeria Mis Viejos</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <h1><i class="fa-solid fa-seedling"></i> Forrajeria Mis Viejos</h1>
+      <p><i class="fa-solid fa-location-dot"></i> Calle 149 entre 49a y 50 N°4978</p>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showSection('catalogo', this)"><i class="fa-solid fa-box-open"></i> Catálogo</button>
+      <button class="nav-btn" onclick="showSection('inventario', this)"><i class="fa-solid fa-clipboard-list"></i> Inventario</button>
+      <button class="nav-btn" onclick="showSection('pedidos', this)"><i class="fa-solid fa-truck"></i> Pedidos</button>
+      <button class="nav-btn" onclick="showSection('distribuidoras', this)"><i class="fa-solid fa-industry"></i> Distribuidoras</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- CATALOGO -->
+    <section id="catalogo" class="section active">
+      <div class="section-header">
+        <h2>Catálogo de Productos</h2>
+        <div class="filtros">
+          <button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">Todos</button>
+          <button class="filtro-btn" onclick="filtrarCategoria('alimento', this)"><i class="fa-solid fa-cow"></i> Alimentos</button>
+          <button class="filtro-btn" onclick="filtrarCategoria('semilla', this)"><i class="fa-solid fa-leaf"></i> Semillas</button>
+          <button class="filtro-btn" onclick="filtrarCategoria('accesorio', this)"><i class="fa-solid fa-toolbox"></i> Accesorios</button>
+        </div>
+      </div>
+      <div class="buscador">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="buscar-catalogo" placeholder="Buscar producto por nombre o descripción..." oninput="renderCatalogo()" />
+      </div>
+      <div id="catalogo-grid" class="producto-grid"></div>
+    </section>
+
+    <!-- INVENTARIO -->
+    <section id="inventario" class="section">
+      <div class="section-header">
+        <h2>Gestión de Inventario</h2>
+        <button class="btn-primary" onclick="abrirModal('modal-producto')"><i class="fa-solid fa-plus"></i> Agregar Producto</button>
+      </div>
+      <div class="buscador">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="buscar-inventario" placeholder="Buscar en el inventario..." oninput="renderInventario()" />
+      </div>
+      <div class="tabla-container">
+        <table id="tabla-inventario">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Stock Mínimo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventario-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DISTRIBUIDORAS -->
+    <section id="distribuidoras" class="section">
+      <div class="section-header">
+        <h2>Distribuidoras</h2>
+        <button class="btn-primary" onclick="abrirModal('modal-distribuidora')"><i class="fa-solid fa-plus"></i> Agregar Distribuidora</button>
+      </div>
+      <div class="tabla-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>WhatsApp</th>
+              <th>Contacto</th>
+              <th>Notas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="distribuidoras-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PEDIDOS -->
+    <section id="pedidos" class="section">
+      <div class="section-header">
+        <h2>Pedidos a Distribuidoras</h2>
+        <button class="btn-primary" onclick="abrirModal('modal-pedido')"><i class="fa-solid fa-plus"></i> Nuevo Pedido</button>
+      </div>
+      <div class="alertas-stock" id="alertas-stock"></div>
+      <div class="tabla-container">
+        <table id="tabla-pedidos">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Distribuidora</th>
+              <th>Productos</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="pedidos-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <span><i class="fa-solid fa-seedling"></i> Forrajeria Mis Viejos · Gestión interna</span>
+    <div class="footer-actions">
+      <button onclick="exportarDatos()"><i class="fa-solid fa-download"></i> Exportar respaldo</button>
+      <button onclick="document.getElementById('importar-archivo').click()"><i class="fa-solid fa-upload"></i> Importar respaldo</button>
+      <button onclick="restablecerDatos()"><i class="fa-solid fa-rotate-left"></i> Restablecer demo</button>
+      <input type="file" id="importar-archivo" accept="application/json,.json" hidden onchange="importarDatos(event)" />
+    </div>
+  </footer>
+
+  <!-- MODAL DISTRIBUIDORA -->
+  <div id="modal-distribuidora" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-dist-titulo"><i class="fa-solid fa-industry"></i> Agregar Distribuidora</h3>
+        <button class="cerrar-modal" onclick="cerrarModal('modal-distribuidora')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-distribuidora" onsubmit="guardarDistribuidora(event)">
+        <input type="hidden" id="dist-id" />
+        <div class="form-group">
+          <label><i class="fa-solid fa-building"></i> Nombre de la Distribuidora</label>
+          <input type="text" id="dist-nombre" placeholder="Ej: Distribuidora El Campo" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fa-brands fa-whatsapp"></i> WhatsApp</label>
+          <input type="tel" id="dist-telefono" placeholder="Ej: 5491112345678" />
+          <small style="color:var(--gris);font-size:0.75rem">Código de país + número sin espacios ni +</small>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-user"></i> Nombre del Contacto</label>
+          <input type="text" id="dist-contacto" placeholder="Ej: Juan Pérez" />
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-note-sticky"></i> Notas</label>
+          <textarea id="dist-notas" placeholder="Observaciones, días de entrega, etc."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="cerrarModal('modal-distribuidora')">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUCTO -->
+  <div id="modal-producto" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-producto-titulo"><i class="fa-solid fa-box"></i> Agregar Producto</h3>
+        <button class="cerrar-modal" onclick="cerrarModal('modal-producto')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-producto" onsubmit="guardarProducto(event)">
+        <input type="hidden" id="producto-id" />
+        <div class="form-group">
+          <label><i class="fa-solid fa-tag"></i> Nombre del Producto</label>
+          <input type="text" id="producto-nombre" placeholder="Ej: Alfalfa Premium" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-list"></i> Categoría</label>
+          <select id="producto-categoria" required>
+            <option value="">Seleccionar...</option>
+            <option value="alimento">Alimento</option>
+            <option value="semilla">Semilla</option>
+            <option value="accesorio">Accesorio</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-align-left"></i> Descripción</label>
+          <textarea id="producto-descripcion" placeholder="Descripción del producto..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fa-solid fa-dollar-sign"></i> Precio ($)</label>
+            <input type="number" id="producto-precio" min="0" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-cubes"></i> Stock Actual</label>
+            <input type="number" id="producto-stock" min="0" required />
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-triangle-exclamation"></i> Stock Mínimo</label>
+            <input type="number" id="producto-stock-min" min="0" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-scale-balanced"></i> Unidad</label>
+          <select id="producto-unidad">
+            <option value="kg">Kilogramos (kg)</option>
+            <option value="bolsa">Bolsa</option>
+            <option value="unidad">Unidad</option>
+            <option value="litro">Litro</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="cerrarModal('modal-producto')">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PEDIDO -->
+  <div id="modal-pedido" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-truck"></i> Nuevo Pedido a Distribuidora</h3>
+        <button class="cerrar-modal" onclick="cerrarModal('modal-pedido')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-pedido" onsubmit="guardarPedido(event)">
+        <div class="form-row" style="grid-template-columns:1fr 1fr">
+          <div class="form-group">
+            <label><i class="fa-solid fa-industry"></i> Distribuidora</label>
+            <select id="pedido-distribuidora" required onchange="autocompletarDistribuidora()">
+              <option value="">Seleccionar distribuidora...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-calendar-day"></i> Fecha del Pedido</label>
+            <input type="date" id="pedido-fecha" required />
+          </div>
+        </div>
+        <div class="form-group" id="grupo-wsp-pedido" style="display:none">
+          <label><i class="fa-brands fa-whatsapp"></i> WhatsApp detectado</label>
+          <input type="text" id="pedido-telefono" readonly style="background:var(--fondo);cursor:not-allowed;color:var(--verde-agua-oscuro);font-weight:600" />
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-basket-shopping"></i> Productos solicitados</label>
+          <div class="items-header">
+            <span>Producto</span>
+            <span>Cantidad</span>
+            <span></span>
+          </div>
+          <div id="items-pedido"></div>
+          <button type="button" class="btn-agregar-item" onclick="agregarItemPedido()"><i class="fa-solid fa-plus"></i> Agregar otro producto</button>
+        </div>
+        <div class="total-pedido" id="total-pedido-preview">Total estimado: $0</div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-note-sticky"></i> Notas <span style="font-weight:400;color:var(--gris);font-size:0.8rem">(opcional)</span></label>
+          <textarea id="pedido-notas" placeholder="Ej: Entregar los martes, traer factura, etc."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="cerrarModal('modal-pedido')">Cancelar</button>
+          <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Crear Pedido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL VER PEDIDO -->
+  <div id="modal-ver-pedido" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-lines"></i> Detalle del Pedido</h3>
+        <button class="cerrar-modal" onclick="cerrarModal('modal-ver-pedido')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="detalle-pedido-content"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="cerrarModal('modal-ver-pedido')">Cerrar</button>
+        <button type="button" id="btn-whatsapp-pedido" class="btn-whatsapp" style="display:none" onclick="enviarWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
