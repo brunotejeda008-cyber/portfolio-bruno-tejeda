@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>La 31 Bebidas — Control de Stock</title>
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="loading-view" class="center-screen">
+      <div class="spinner"></div>
+      <p>Conectando con Firebase...</p>
+    </div>
+
+    <div id="auth-view" class="center-screen hidden">
+      <div class="auth-card">
+        <img src="./logo.png" alt="La 31 Bebidas" class="auth-logo" />
+        <h1>La 31 Bebidas</h1>
+        <p class="subtitle">Control de stock e inventario en tiempo real</p>
+        <button id="btn-google-login" class="btn btn-primary btn-full">
+          <span>Continuar con Google</span>
+        </button>
+        <p id="auth-error" class="error-text hidden"></p>
+      </div>
+    </div>
+
+    <div id="app-view" class="app-shell hidden">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <img src="./logo.png" alt="La 31 Bebidas" class="brand-logo" />
+          <div>
+            <h1>La 31 Bebidas</h1>
+            <span class="live-pill">● Conectado a Firestore</span>
+          </div>
+        </div>
+        <div class="topbar-user">
+          <img id="user-avatar" class="avatar hidden" alt="Avatar" />
+          <span id="user-name" class="user-name"></span>
+          <button id="btn-logout" class="btn btn-ghost btn-sm">Salir</button>
+        </div>
+      </header>
+
+      <main class="container">
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-label">Productos</span>
+            <strong id="kpi-products" class="kpi-value">0</strong>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Unidades en stock</span>
+            <strong id="kpi-units" class="kpi-value">0</strong>
+          </div>
+          <div class="kpi-card kpi-warn" id="kpi-low-card" title="Filtrar stock bajo">
+            <span class="kpi-label">Stock bajo</span>
+            <strong id="kpi-low" class="kpi-value">0</strong>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Valor estimado</span>
+            <strong id="kpi-value" class="kpi-value">$0</strong>
+          </div>
+        </section>
+
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="orders">🛒 Pedidos</button>
+          <button class="tab-btn" data-tab="inventory">📦 Stock de bebidas</button>
+          <button class="tab-btn" data-tab="movements">📋 Historial</button>
+        </nav>
+
+        <section id="tab-orders">
+          <form id="order-form" class="order-card">
+            <div class="order-card-head">
+              <h2>Nuevo pedido / venta</h2>
+              <span class="drink-meta">El precio se asigna automáticamente según el producto y descuenta del stock</span>
+            </div>
+            <div class="order-form-grid">
+              <label class="field">
+                <span>Cliente *</span>
+                <input id="order-cliente" class="input" required maxlength="120" placeholder="Nombre del cliente" />
+              </label>
+              <label class="field">
+                <span>Producto *</span>
+                <select id="order-producto" class="input" required>
+                  <option value="">Seleccioná un producto...</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Cantidad *</span>
+                <input id="order-cantidad" type="number" class="input" min="1" step="1" required value="1" />
+              </label>
+              <label class="field">
+                <span>Precio unitario</span>
+                <input id="order-precio-unit" class="input input-readonly" readonly value="$0" />
+              </label>
+              <label class="field">
+                <span>Precio total</span>
+                <input id="order-precio-total" class="input input-readonly total-highlight" readonly value="$0" />
+              </label>
+              <div class="field field-submit">
+                <span>&nbsp;</span>
+                <button type="submit" class="btn btn-primary btn-full">Registrar pedido</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="table-wrap">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio unit.</th>
+                  <th>Precio total</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+          <div id="empty-orders" class="empty-state hidden">
+            <p>Todavía no hay pedidos registrados.</p>
+          </div>
+        </section>
+
+        <section id="tab-inventory" class="hidden">
+          <div class="toolbar">
+            <input id="search-input" type="search" class="input" placeholder="Buscar por nombre, marca o tamaño..." />
+            <select id="category-filter" class="input select-sm">
+              <option value="Todas">Todas las categorías</option>
+              <option value="Gaseosas">Gaseosas</option>
+              <option value="Cervezas">Cervezas</option>
+              <option value="Aguas">Aguas</option>
+              <option value="Vinos">Vinos</option>
+              <option value="Aperitivos">Aperitivos</option>
+              <option value="Energizantes">Energizantes</option>
+              <option value="Jugos">Jugos</option>
+              <option value="Otros">Otros</option>
+            </select>
+            <label class="checkbox-pill">
+              <input type="checkbox" id="low-stock-only" />
+              <span>Solo stock bajo</span>
+            </label>
+            <button id="btn-new-drink" class="btn btn-primary">+ Nueva bebida</button>
+          </div>
+
+          <div id="drinks-grid" class="drinks-grid"></div>
+          <div id="empty-drinks" class="empty-state hidden">
+            <p>No hay bebidas cargadas todavía.</p>
+            <button id="btn-empty-add" class="btn btn-primary">Cargar primera bebida</button>
+          </div>
+        </section>
+
+        <section id="tab-movements" class="hidden">
+          <div id="movements-list" class="movements-list"></div>
+          <div id="empty-movements" class="empty-state hidden">
+            <p>Todavía no hay movimientos registrados.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="drink-modal" class="modal">
+      <form id="drink-form" method="dialog" class="modal-content">
+        <div class="modal-header">
+          <h2 id="drink-modal-title">Nueva bebida</h2>
+          <button type="button" class="icon-btn" data-close="drink-modal">✕</button>
+        </div>
+        <input type="hidden" id="drink-id" />
+        <div class="form-grid">
+          <label class="field full">
+            <span>Nombre *</span>
+            <input id="drink-name" class="input" required maxlength="100" placeholder="Ej: Coca-Cola" />
+          </label>
+          <label class="field">
+            <span>Marca</span>
+            <input id="drink-brand" class="input" maxlength="80" placeholder="Ej: Coca-Cola" />
+          </label>
+          <label class="field">
+            <span>Tamaño / Formato *</span>
+            <select id="drink-size" class="input" required>
+              <option value="473ml">473ml</option>
+              <option value="700ml">700ml</option>
+              <option value="1L">1L</option>
+              <option value="1.5L">1.5L</option>
+              <option value="2.25L">2.25L</option>
+              <option value="2.50L">2.50L</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Categoría *</span>
+            <select id="drink-category" class="input" required>
+              <option value="Gaseosas">Gaseosas</option>
+              <option value="Cervezas">Cervezas</option>
+              <option value="Aguas">Aguas</option>
+              <option value="Vinos">Vinos</option>
+              <option value="Aperitivos">Aperitivos</option>
+              <option value="Energizantes">Energizantes</option>
+              <option value="Jugos">Jugos</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Precio unitario ($) *</span>
+            <input id="drink-price" type="number" class="input" min="0" step="0.01" required value="0" />
+          </label>
+          <label class="field">
+            <span>Stock actual *</span>
+            <input id="drink-stock" type="number" class="input" min="0" step="1" required value="0" />
+          </label>
+          <label class="field">
+            <span>Stock mínimo (alerta) *</span>
+            <input id="drink-min-stock" type="number" class="input" min="0" step="1" required value="5" />
+          </label>
+          <label class="field full">
+            <span>Notas</span>
+            <input id="drink-notes" class="input" maxlength="300" placeholder="Ej: Proveedor, heladera, pack x6..." />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close="drink-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-drink">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="movement-modal" class="modal">
+      <form id="movement-form" method="dialog" class="modal-content">
+        <div class="modal-header">
+          <h2 id="movement-modal-title">Registrar movimiento</h2>
+          <button type="button" class="icon-btn" data-close="movement-modal">✕</button>
+        </div>
+        <input type="hidden" id="move-drink-id" />
+        <p id="move-drink-summary" class="move-summary"></p>
+        <div class="form-grid">
+          <label class="field">
+            <span>Tipo *</span>
+            <select id="move-type" class="input" required>
+              <option value="in">Entrada (Compra / Reposición)</option>
+              <option value="out">Salida (Venta / Consumo)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Cantidad *</span>
+            <input id="move-qty" type="number" class="input" min="1" step="1" required value="1" />
+          </label>
+          <label class="field full">
+            <span>Motivo</span>
+            <input id="move-reason" class="input" maxlength="200" placeholder="Ej: Compra distribuidor, venta mostrador..." />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close="movement-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Confirmar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast hidden"></div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
