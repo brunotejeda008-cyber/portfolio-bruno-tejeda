@@ -1,0 +1,99 @@
+// --- Configuración de Pines ---
+
+// Plaza 1
+
+const int trigPin1 = D2;
+
+const int echoPin1 = D1;
+
+const int ledPin1 = D0;
+
+
+
+// Plaza 2
+
+const int trigPin2 = D3;
+
+const int echoPin2 = D4;
+
+const int ledPin2 = D7;
+
+
+
+void setup() {
+
+Serial.begin(9600);
+
+
+// Configurar pinos como Entradas o Salidas
+
+pinMode(trigPin1, SALIDA);
+
+pinMode(echoPin1, INPUT);
+
+pinMode(ledPin1, SALIDA);
+
+
+
+pinMode(trigPin2, SALIDA);
+
+pinMode(echoPin2, INPUT);
+
+pinMode(ledPin2, SALIDA);
+
+}
+
+
+
+// Función optimizada para medir distancia
+
+largo medirDistancia(int trig, int echo) {
+
+digitalWrite(trig, LOW);
+
+delayMicroseconds(2);
+
+digitalWrite(trig, HIGH);
+
+delayMicroseconds(10);
+
+digitalWrite(trig, LOW);
+
+
+devolver pulseIn(eco, HIGH) * 0.034 / 2;
+
+}
+
+
+
+void loop() {
+
+// Medir y evaluar si la plaza está ocupada (< 15 cm)
+
+int ocupada1 = (medirDistancia(trigPin1, echoPin1) < 15) ? 1: 0;
+
+int ocupada2 = (medirDistancia(trigPin2, echoPin2) < 15) ? 1: 0;
+
+
+
+// Controlar cada LED con su respectivo sensor
+
+digitalWrite(ledPin1, ocupada1);
+
+digitalWrite(ledPin2, ocupada2);
+
+
+
+// Mostrar el estado en el Monitor Serial (Formato: "Plaza1,Plaza2")
+
+Serial.print(ocupada1);
+
+Serial.print(",");
+
+Serial.println(ocupada2);
+
+
+
+delay(500);
+
+}
