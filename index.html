@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio de Bruno Tejeda</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Space Grotesk (títulos modernos tech), Plus Jakarta Sans (legibilidad) y JetBrains Mono (stats/códigos) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: '#0f172a',
+                        velvet: '#1e293b',
+                        mystic: '#273449',
+                        neonViolet: '#3b82f6',
+                        neonCyan: '#38bdf8',
+                        goldAccent: '#d97706',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Fondo sobrio y profesional en azul pizarra oscuro */
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(circle at 50% 15%, rgba(59, 130, 246, 0.12) 0%, rgba(15, 23, 42, 0.92) 55%, rgba(15, 23, 42, 1) 100%),
+                radial-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 0);
+            background-size: 100% 100%, 24px 24px;
+            color: #f8fafc;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Utilidades 3D para cartas */
+        .perspective-1000 {
+            perspective: 1200px;
+        }
+
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Diseño del dorso de la carta (Mazo) */
+        .card-back-pattern {
+            background-color: #1e293b;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.16) 0%, transparent 70%),
+                repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.06) 0px, rgba(148, 163, 184, 0.06) 2px, transparent 2px, transparent 10px),
+                repeating-linear-gradient(-45deg, rgba(56, 189, 248, 0.05) 0px, rgba(56, 189, 248, 0.05) 2px, transparent 2px, transparent 10px);
+        }
+
+        /* Efecto de pila física en el mazo */
+        .deck-stack {
+            box-shadow: 
+                0 2px 0 #1e293b,
+                0 4px 0 #0f172a,
+                0 6px 0 #334155,
+                0 8px 0 #0f172a,
+                0 10px 0 #334155,
+                0 20px 35px -5px rgba(0, 0, 0, 0.65),
+                0 0 20px rgba(59, 130, 246, 0.15);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+        }
+
+        .deck-stack:hover {
+            transform: translateY(-6px) rotate(-1deg);
+            box-shadow: 
+                0 2px 0 #1e293b,
+                0 4px 0 #0f172a,
+                0 6px 0 #334155,
+                0 8px 0 #0f172a,
+                0 10px 0 #334155,
+                0 28px 45px -5px rgba(0, 0, 0, 0.75),
+                0 0 28px rgba(59, 130, 246, 0.28);
+        }
+
+        /* Sacudida física del mazo al lanzar cada carta */
+        @keyframes deckRecoil {
+            0% { transform: scale(1) rotate(0deg); }
+            35% { transform: scale(0.95) rotate(-2.5deg) translateY(3px); }
+            100% { transform: scale(1) rotate(0deg) translateY(0); }
+        }
+
+        .deck-recoil {
+            animation: deckRecoil 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Carta voladora 3D que sale desde el mazo hasta su slot */
+        .flying-card-wrapper {
+            position: fixed;
+            z-index: 60;
+            pointer-events: none;
+            perspective: 1400px;
+            will-change: transform, width, height;
+            transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+                        width 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+                        height 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .flying-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.72s cubic-bezier(0.25, 1, 0.35, 1);
+        }
+
+        /* Inicia boca abajo (180deg) mostrando el dorso del mazo */
+        .flying-card-inner.face-down {
+            transform: rotateY(180deg);
+        }
+
+        /* Termina boca arriba (0deg) mostrando el proyecto */
+        .flying-card-inner.face-up {
+            transform: rotateY(0deg);
+        }
+
+        /* Animación de extracción de carta Sobre Mí */
+        @keyframes drawAboutCard {
+            0% {
+                opacity: 0;
+                transform: translateY(-120px) scale(0.6) rotateY(180deg);
+            }
+            60% {
+                opacity: 1;
+                transform: translateY(10px) scale(1.02) rotateY(15deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateY(0deg);
+            }
+        }
+
+        .animate-draw-about {
+            animation: drawAboutCard 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Brillo holográfico sutil al hacer hover en cartas */
+        .holo-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .holo-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(125deg, transparent 30%, rgba(255, 255, 255, 0.06) 45%, rgba(59, 130, 246, 0.08) 50%, transparent 65%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        .holo-card:hover::after {
+            transform: translateX(100%);
+        }
+
+        .holo-card:hover {
+            transform: translateY(-6px) scale(1.015);
+            border-color: rgba(59, 130, 246, 0.65);
+            box-shadow: 0 18px 30px -10px rgba(0, 0, 0, 0.6), 0 0 18px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Animación pop-out para que la imagen sobresalga al abrirla en grande */
+        @keyframes popOutImage {
+            0% { opacity: 0; transform: scale(0.82) translateY(18px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-pop-out {
+            animation: popOutImage 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Scrollbar personalizada para modales */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09080f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2e2754;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between selection:bg-neonViolet selection:text-white">
+
+    <!-- Barra Superior Minimalista -->
+    <header class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-2 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-neonViolet to-neonCyan p-[1px]">
+                <div class="w-full h-full bg-obsidian rounded-[7px] flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-neonViolet"></i>
+                </div>
+            </div>
+            <span class="font-display text-sm sm:text-base font-bold tracking-wider text-white">Portfolio de Bruno Tejeda</span>
+        </div>
+    </header>
+
+    <!-- Escenario Principal: La Mesa de Juego -->
+    <main id="main-stage" class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col items-center justify-center">
+
+        <!-- Sección del Mazo Central -->
+        <section id="deck-zone" class="flex flex-col items-center text-center mb-8 transition-all duration-500">
+            <h1 class="font-display text-2xl sm:text-4xl font-extrabold tracking-wide text-white mb-2">
+                Portfolio de Bruno Tejeda
+            </h1>
+            <p class="text-xs font-mono uppercase tracking-[0.25em] text-neonCyan mb-4">
+                Elige tu próxima jugada
+            </p>
+
+            <!-- Mazo Apilado Boca Abajo -->
+            <div id="main-deck" onclick="openAboutCard()" title="Haz clic para sacar una carta" class="deck-stack card-back-pattern relative w-44 h-64 sm:w-48 sm:h-72 rounded-2xl border-2 border-neonViolet/50 cursor-pointer flex flex-col items-center justify-center p-4 select-none group">
+                <!-- Marco interno decorativo estilo Tarot -->
+                <div class="w-full h-full border border-amber-400/30 rounded-xl flex flex-col items-center justify-between p-3 relative">
+                    <div class="w-full flex justify-between text-[10px] font-mono text-amber-300/70">
+                        <span>✦</span>
+                        <span>ED. 2026</span>
+                        <span>✦</span>
+                    </div>
+
+                    <!-- Emblema Central del Dorso -->
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-20 h-20 rounded-full border border-neonViolet/40 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                            <div class="w-14 h-14 rotate-45 border border-neonCyan/50 flex items-center justify-center bg-obsidian/60">
+                                <i data-lucide="eye" class="w-6 h-6 -rotate-45 text-amber-300"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <span class="font-display text-xs tracking-[0.2em] text-slate-200 block">EL MAZO</span>
+                        <span class="text-[10px] font-mono text-slate-400 group-hover:text-neonCyan transition-colors">Toca para robar</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles Principales Debajo del Mazo -->
+            <div class="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                <button onclick="openAboutCard()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-neonViolet to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-neonViolet/25 flex items-center gap-2 transition-all active:scale-95 cursor-pointer">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    <span>Sacar cartas: Sobre mí</span>
+                </button>
+
+                <button id="btn-deal-projects" onclick="dealProjects()" class="px-5 py-3 rounded-xl bg-velvet hover:bg-mystic text-white border border-neonCyan/40 hover:border-neonCyan font-semibold text-sm shadow-lg flex items-center gap-2 transition-all active:scale-95 cursor-pointer">
+                    <i data-lucide="layers" class="w-4 h-4 text-neonCyan"></i>
+                    <span>Repartir proyectos</span>
+                </button>
+
+                <button id="btn-reset-deck" onclick="resetDeck()" class="hidden px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 font-medium text-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>Recoger y barajar</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Zona de Despliegue de Cartas de Proyectos -->
+        <section id="projects-table" class="w-full hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between border-b border-white/10 pb-3 mb-6 gap-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                    <h2 class="font-display text-base sm:text-lg font-bold tracking-wide text-white">Cartas en la Mesa (Proyectos)</h2>
+                </div>
+                <p class="text-xs text-slate-400">Haz clic en cualquier carta para inspeccionar el caso y sus archivos</p>
+            </div>
+
+            <!-- Grid de Cartas Repartidas -->
+            <div id="projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Las cartas se inyectan dinámicamente vía JS -->
+            </div>
+        </section>
+
+        <!-- Zona de Despliegue en Mesa: Mano de 3 Cartas "Sobre Mí" (sin oscurecer el fondo) -->
+        <section id="about-table" class="w-full hidden mb-8">
+            <div class="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 mb-6 gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-lg bg-neonViolet/20 border border-neonViolet/40 text-violet-200 font-mono text-xs font-bold">
+                        MANO DEL JUGADOR // SOBRE MÍ
+                    </span>
+                </div>
+                <button onclick="closeAboutCard()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <span>Devolver al mazo</span>
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+
+            <!-- Grid de las 3 Cartas Sobre Mí -->
+            <div id="about-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+
+                <!-- ==================== CARTA 1: PERFIL, FOTO Y CV ==================== -->
+                <div class="about-card-slot rounded-2xl bg-velvet border-2 border-neonViolet/60 shadow-2xl shadow-neonViolet/20 p-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2.5">
+                            <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/40 text-amber-300 font-mono text-[10px] font-bold tracking-wider">
+                                01 // PERFIL
+                            </span>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">
+                                18 años
+                            </span>
+                        </div>
+
+                        <!-- Galería de Foto -->
+                        <div class="relative w-full h-56 rounded-xl overflow-hidden border border-white/15 mb-3 group bg-obsidian">
+                            <img id="about-photo" src="brunotejeda.jpeg" onerror="this.onerror=null; this.src=brunoAvatarFallback;" onclick="openImageLightbox(this.src, document.getElementById('about-photo-caption').textContent)" alt="Foto de Bruno Tejeda" class="w-full h-full object-cover object-center cursor-zoom-in transition-all duration-300 group-hover:scale-[1.03]">
+                            
+                            <input type="file" id="about-photo-input" accept="image/*" class="hidden" onchange="handleLocalPhotoUpload(event)">
+                            <button onclick="document.getElementById('about-photo-input').click()" class="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/75 hover:bg-neonViolet text-white text-[10px] font-mono border border-white/15 backdrop-blur-sm flex items-center gap-1 transition-colors cursor-pointer shadow-lg">
+                                <i data-lucide="camera" class="w-3 h-3 text-neonCyan"></i>
+                                <span>Subir foto</span>
+                            </button>
+
+                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 flex items-end justify-between">
+                                <span id="about-photo-caption" class="text-[10px] font-mono text-slate-200">01 / Técnica 5 Berazategui</span>
+                                <div id="about-photo-dots" class="flex gap-1"></div>
+                            </div>
+
+                            <button onclick="changeAboutPhoto(-1)" class="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 hover:bg-neonViolet text-white flex items-center justify-center backdrop-blur-sm transition-colors cursor-pointer">
+                                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="changeAboutPhoto(1)" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 hover:bg-neonViolet text-white flex items-center justify-center backdrop-blur-sm transition-colors cursor-pointer">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Nombre, Localidad y Descripción -->
+                        <div class="mb-2">
+                            <h3 class="font-sans text-xl font-extrabold text-white tracking-tight">Bruno Tejeda</h3>
+                            <p class="text-[11px] font-mono text-neonCyan mt-0.5">Desarrollador Web en Formación</p>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                            Estoy terminando 7° año en la Técnica 5 de Berazategui. Me gusta armar páginas web, buscarle la vuelta a los problemas y laburar en equipo para sacar los proyectos adelante.
+                        </p>
+
+                        <!-- Ficha de Datos Clave (Estilo Tabla) -->
+                        <div class="rounded-xl bg-obsidian/90 border border-white/10 px-3 py-1 mb-3 divide-y divide-white/10 text-[11px]">
+                            <div class="py-2 flex items-center justify-between gap-2">
+                                <span class="text-slate-400">Ubicación</span>
+                                <span class="font-semibold text-white text-right">Berazategui, Buenos Aires</span>
+                            </div>
+                            <div class="py-2 flex items-center justify-between gap-2">
+                                <span class="text-slate-400">Edad</span>
+                                <span class="font-semibold text-white text-right">18 años</span>
+                            </div>
+                            <div class="py-2 flex items-center justify-between gap-2">
+                                <span class="text-slate-400">Stack Principal</span>
+                                <span class="font-semibold text-white text-right">HTML · CSS · JS · PHP · Python · MySQL</span>
+                            </div>
+                        </div>
+
+                        <!-- Trayectoria Educativa -->
+                        <div class="rounded-xl bg-obsidian/90 border border-white/10 p-3 mb-3 space-y-2 text-[11px]">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-neonCyan font-bold block">Trayectoria Educativa</span>
+                            <div class="border-l-2 border-neonViolet pl-2.5">
+                                <p class="font-bold text-white">E.E.S.T. N° 5 de Berazategui</p>
+                                <p class="text-slate-400">Secundaria · 1° a 7° año (en curso)</p>
+                            </div>
+                            <div class="border-l-2 border-slate-500 pl-2.5">
+                                <p class="font-bold text-white">Colegio Atanasio Lanz (Villa España)</p>
+                                <p class="text-slate-400">Primaria privada · 1° a 6° grado</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón Ver CV -->
+                    <div class="pt-3 border-t border-white/10">
+                        <button onclick="downloadCV()" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-obsidian font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                            <span>Ver CV (PDF)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ==================== CARTA 2: BARBERÍA Y VENTA DE BEBIDAS ==================== -->
+                <div class="about-card-slot rounded-2xl bg-velvet border-2 border-amber-400/50 shadow-2xl shadow-amber-500/10 p-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/40 text-amber-300 font-mono text-[10px] font-bold tracking-wider">
+                                02 // EXPERIENCIA & OFICIOS
+                            </span>
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+
+                        <h3 class="font-sans text-lg font-extrabold text-white tracking-tight mb-1">Más allá del código</h3>
+                        <p class="text-xs text-slate-400 mb-4">Habilidades prácticas, trato directo con la gente y emprendimiento propio.</p>
+
+                        <!-- Bloque 1: Curso de Barbería -->
+                        <div class="p-3.5 rounded-xl bg-obsidian/90 border border-white/10 mb-3">
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 flex-shrink-0">
+                                    <i data-lucide="scissors" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Curso de Barbería</h4>
+                                    <span class="text-[10px] font-mono text-amber-300/90">Formación & Práctica</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                                Capacitación en cortes, degradados y prolijidad en los detalles. Aprendí a trabajar con paciencia, precisión y buena atención personalizada.
+                            </p>
+
+                            <!-- Mini Carrusel de Fotos de Barbería -->
+                            <div class="relative w-full h-48 rounded-xl overflow-hidden border border-amber-400/30 bg-velvet group">
+                                <img id="barber-photo" src="" alt="Fotos de barbería" onclick="openImageLightbox(this.src, document.getElementById('barber-caption').textContent)" class="w-full h-full object-cover object-center cursor-zoom-in transition-all duration-300 group-hover:scale-[1.03]">
+                                <input type="file" id="barber-photo-input" accept="image/*" multiple class="hidden" onchange="handleBarberPhotoUpload(event)">
+                                <button type="button" onclick="document.getElementById('barber-photo-input').click()" class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded bg-black/75 hover:bg-amber-500 text-white text-[9px] font-mono border border-white/15 backdrop-blur-sm flex items-center gap-1 transition-colors cursor-pointer">
+                                    <i data-lucide="camera" class="w-2.5 h-2.5 text-amber-300"></i>
+                                    <span>Subir</span>
+                                </button>
+                                <button type="button" onclick="changeBarberPhoto(-1)" class="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/65 hover:bg-amber-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors cursor-pointer">
+                                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button type="button" onclick="changeBarberPhoto(1)" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/65 hover:bg-amber-500 text-white flex items-center justify-center backdrop-blur-sm transition-colors cursor-pointer">
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-2 py-1.5 flex items-center justify-between">
+                                    <span id="barber-caption" class="text-[9px] font-mono text-amber-200 truncate">01 / Cortes &amp; Degradados</span>
+                                    <div id="barber-dots" class="flex gap-1"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque 2: Venta de Bebidas -->
+                        <div class="p-3.5 rounded-xl bg-obsidian/90 border border-white/10">
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-neonCyan/15 border border-neonCyan/30 flex items-center justify-center text-neonCyan flex-shrink-0">
+                                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Venta de Bebidas</h4>
+                                    <span class="text-[10px] font-mono text-neonCyan">Emprendimiento & Ventas</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                                Gestión de ventas, control de stock, manejo de pedidos y trato directo con clientes. Experiencia real resolviendo rápido en el día a día.
+                            </p>
+                            <a href="https://www.instagram.com/la31.bebidas" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-pink-200 font-mono text-xs flex items-center justify-center gap-1.5 transition-colors">
+                                <i data-lucide="instagram" class="w-3.5 h-3.5 text-pink-300"></i>
+                                <span>@la31.bebidas</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-white/10 flex flex-wrap gap-1.5">
+                        <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 text-[10px] font-mono">✦ Atención al cliente</span>
+                        <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 text-[10px] font-mono">✦ Responsabilidad</span>
+                    </div>
+                </div>
+
+                <!-- ==================== CARTA 3: CONTACTO DIRECTO ==================== -->
+                <div class="about-card-slot rounded-2xl bg-velvet border-2 border-neonCyan/60 shadow-2xl shadow-neonCyan/15 p-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2 py-0.5 rounded bg-neonCyan/15 border border-neonCyan/40 text-neonCyan font-mono text-[10px] font-bold tracking-wider">
+                                03 // CONTACTO
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Disponible"></span>
+                        </div>
+
+                        <h3 class="font-sans text-lg font-extrabold text-white tracking-tight mb-1">¿Hablamos?</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Disponible para proyectos web, pasantías o propuestas laborales. Escribime por cualquiera de estos medios:
+                        </p>
+
+                        <!-- Lista de Canales de Contacto (con logos oficiales SVG) -->
+                        <div class="space-y-2">
+                            <!-- WhatsApp -->
+                            <a href="https://wa.me/5491132359362" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-between transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-[#25D366]/20 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 fill-[#25D366]" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.031 2C6.504 2 2 6.486 2 12.001c0 1.763.462 3.486 1.341 5.004L2 22l5.125-1.341A9.97 9.97 0 0 0 12.031 22C17.558 22 22 17.515 22 12.001 22 6.486 17.558 2 12.031 2zm5.826 14.122c-.245.689-1.434 1.318-1.972 1.399-.506.076-1.158.108-1.869-.118-.432-.137-.986-.32-1.694-.626-2.98-1.287-4.926-4.293-5.075-4.492-.148-.198-1.21-1.61-1.21-3.071 0-1.461.765-2.18 1.037-2.478.272-.297.593-.372.791-.372.198 0 .396.002.569.01.183.009.428-.069.67.512.247.595.841 2.056.915 2.205.074.149.124.322.025.52-.099.198-.148.322-.297.495-.148.174-.312.388-.445.52-.149.149-.304.31-.131.608.173.297.77 1.27 1.653 2.057 1.136 1.013 2.094 1.327 2.391 1.476.297.148.47.124.643-.074.173-.198.742-.867.94-1.164.198-.297.396-.248.668-.149.272.099 1.732.817 2.029.966.297.148.495.223.569.346.074.124.074.718-.171 1.407z"/></svg>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-white block">WhatsApp</span>
+                                        <span class="text-[11px] font-mono text-emerald-200">11-3235-9362</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4 text-emerald-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                            </a>
+
+                            <!-- GitHub -->
+                            <a href="https://github.com/brunotejeda008-cyber" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 flex items-center justify-between transition-all group">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                                    </div>
+                                    <div class="truncate">
+                                        <span class="text-xs font-bold text-white block">GitHub</span>
+                                        <span class="text-[11px] font-mono text-slate-300 truncate block">@brunotejeda008-cyber</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                            </a>
+
+                            <!-- LinkedIn -->
+                            <a href="https://www.linkedin.com/feed/foryou/" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 flex items-center justify-between transition-all group">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-lg bg-[#0A66C2]/25 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 fill-[#0A66C2]" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                                    </div>
+                                    <div class="truncate">
+                                        <span class="text-xs font-bold text-white block">LinkedIn</span>
+                                        <span class="text-[11px] font-mono text-sky-200 truncate block">Bruno Tejeda</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4 text-sky-300 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                            </a>
+
+                            <!-- Discord -->
+                            <button onclick="copyText('negrito069', 'Usuario de Discord')" class="w-full p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-between transition-all text-left group cursor-pointer">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-lg bg-[#5865F2]/25 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 fill-[#5865F2]" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                                    </div>
+                                    <div class="truncate">
+                                        <span class="text-xs font-bold text-white block">Discord</span>
+                                        <span class="text-[11px] font-mono text-indigo-200 truncate block">negrito069</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="copy" class="w-4 h-4 text-indigo-300 flex-shrink-0"></i>
+                            </button>
+
+                            <!-- Gmail -->
+                            <button onclick="copyEmail()" class="w-full p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 flex items-center justify-between transition-all text-left group cursor-pointer">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-lg bg-[#EA4335]/20 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-4 h-4 fill-[#EA4335]" viewBox="0 0 24 24" aria-hidden="true"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+                                    </div>
+                                    <div class="truncate">
+                                        <span class="text-xs font-bold text-white block">Gmail</span>
+                                        <span class="text-[11px] font-mono text-red-200 truncate block">brunotejeda008@gmail.com</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="copy" class="w-4 h-4 text-red-300 flex-shrink-0"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-white/10 text-center">
+                        <span class="text-[10px] font-mono text-slate-400">Berazategui, Zona Sur • Buenos Aires</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- VISTA DEDICADA DE PROYECTO (PÁGINA COMPLETA SPLIT-SCREEN 2 COLUMNAS) -->
+    <!-- ===================================================================== -->
+    <section id="project-modal" class="hidden flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div class="w-full flex flex-col overflow-hidden rounded-3xl bg-velvet border border-white/15 shadow-2xl">
+
+            <!-- Barra Superior de Navegación -->
+            <div class="flex items-center justify-between gap-3 px-6 py-4 bg-obsidian/90 border-b border-white/10">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <button onclick="closeProjectModal()" class="px-3.5 py-2 rounded-xl bg-neonViolet/20 hover:bg-neonViolet/35 border border-neonViolet/40 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer flex-shrink-0">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Volver a la mesa</span>
+                    </button>
+                    <span id="modal-proj-number" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs font-bold text-blue-200 flex-shrink-0">#01</span>
+                    <h2 id="modal-proj-title" class="font-display text-lg sm:text-2xl font-bold text-white truncate">Nombre del Proyecto</h2>
+                </div>
+                <span id="modal-proj-category" class="hidden md:inline-block px-3 py-1 rounded-lg bg-neonCyan/15 border border-neonCyan/30 font-mono text-[11px] text-sky-200 flex-shrink-0">Categoría</span>
+            </div>
+
+            <!-- Contenido Split-Screen (2 Columnas) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12">
+
+                <!-- COLUMNA IZQUIERDA (5 cols): Galería + Botón Abrir + Ficha Técnica -->
+                <div class="lg:col-span-5 p-6 bg-obsidian/50 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-5">
+                    <!-- Visor de Galería -->
+                    <div id="modal-proj-img-wrap" class="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-obsidian border border-white/15 group cursor-zoom-in shadow-lg" title="Haz clic para ver la imagen en grande">
+                        <img id="modal-proj-main-img" src="" alt="Vista previa del proyecto" class="w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.03]">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center pointer-events-none">
+                            <span class="opacity-0 group-hover:opacity-100 transition-opacity px-3.5 py-1.5 rounded-full bg-neonViolet/90 text-white text-xs font-bold shadow-xl flex items-center gap-1.5">
+                                <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                                <span>Ampliar</span>
+                            </span>
+                        </div>
+                        <button id="modal-proj-prev-btn" type="button" onclick="event.stopPropagation(); prevProjectImage()" title="Imagen anterior" class="hidden absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/75 hover:bg-neonViolet text-white border border-white/20 flex items-center justify-center shadow-lg transition-all cursor-pointer z-10">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <button id="modal-proj-next-btn" type="button" onclick="event.stopPropagation(); nextProjectImage()" title="Siguiente imagen" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/75 hover:bg-neonViolet text-white border border-white/20 flex items-center justify-center shadow-lg transition-all cursor-pointer z-10">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                        <div class="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/80 text-[10px] font-mono text-neonCyan border border-white/10">
+                            <span id="modal-proj-img-counter">1 / 1</span>
+                        </div>
+                        <div class="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/80 text-[10px] font-mono text-slate-200 border border-white/10 max-w-[65%] truncate">
+                            <span id="modal-proj-img-label">Pieza 1</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón Abrir Proyecto -->
+                    <a id="modal-proj-open-btn" href="#" class="hidden w-full py-3 px-4 rounded-xl bg-neonViolet hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all">
+                        <span>Abrir proyecto en vivo</span>
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>
+
+                    <!-- Ficha Técnica Compacta -->
+                    <div class="rounded-2xl bg-velvet/90 border border-white/10 p-4 space-y-3 text-xs">
+                        <div class="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
+                            <span class="text-slate-400 font-mono text-[10px] uppercase">Año</span>
+                            <span id="modal-proj-year" class="font-semibold text-white text-right">2026</span>
+                        </div>
+                        <div class="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
+                            <span class="text-slate-400 font-mono text-[10px] uppercase">Cliente</span>
+                            <span id="modal-proj-client" class="font-medium text-slate-200 text-right">Institución</span>
+                        </div>
+                        <div class="pb-2.5 border-b border-white/10">
+                            <span class="text-slate-400 font-mono text-[10px] uppercase block mb-1">Integrantes</span>
+                            <p id="modal-proj-team" class="font-medium text-white leading-relaxed"></p>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-mono text-[10px] uppercase block mb-1">Docente / Contexto</span>
+                            <p id="modal-proj-professor" class="font-medium text-amber-300 leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <!-- Stack Tecnológico -->
+                    <div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 block mb-2">Tecnologías</span>
+                        <div id="modal-proj-stack" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA (7 cols): Pestañas Interactivas Rediseñadas -->
+                <div class="lg:col-span-7 p-6 sm:p-8 flex flex-col gap-6 bg-gradient-to-br from-velvet via-velvet to-obsidian/60">
+                    <!-- Barra de Pestañas Limpia (2 pestañas) -->
+                    <div class="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-obsidian/90 border border-white/10 shadow-inner">
+                        <button type="button" data-mtab="overview" onclick="switchModalTab('overview')" class="modal-tab-btn flex-1 py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neonViolet text-white flex items-center justify-center gap-2">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                            <span>Análisis del Caso</span>
+                        </button>
+                        <button type="button" data-mtab="files" onclick="switchModalTab('files')" class="modal-tab-btn flex-1 py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-white flex items-center justify-center gap-2">
+                            <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>
+                            <span>Archivos &amp; Links</span>
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: Análisis del Caso (Formato Editorial Fluido, sin bloques) -->
+                    <div id="mtab-overview" class="space-y-6 px-1">
+                        <div class="pb-5 border-b border-white/10">
+                            <span class="text-[11px] font-mono uppercase tracking-widest text-neonCyan font-bold block mb-2">Resumen del Proyecto</span>
+                            <p id="modal-proj-summary" class="text-base sm:text-lg font-medium text-white leading-relaxed"></p>
+                        </div>
+
+                        <div class="pb-5 border-b border-white/10 space-y-2">
+                            <h3 class="text-sm font-mono uppercase tracking-wider text-amber-400 font-bold">01. La Problemática</h3>
+                            <p id="modal-proj-challenge" class="text-sm text-slate-300 leading-7"></p>
+                        </div>
+
+                        <div class="pb-5 border-b border-white/10 space-y-2">
+                            <h3 class="text-sm font-mono uppercase tracking-wider text-emerald-400 font-bold">02. La Solución Desarrollada</h3>
+                            <p id="modal-proj-solution" class="text-sm text-slate-300 leading-7"></p>
+                        </div>
+
+                        <div id="modal-proj-highlights-wrap" class="space-y-3">
+                            <h3 class="text-sm font-mono uppercase tracking-wider text-neonCyan font-bold">03. Funcionalidades y Alcance</h3>
+                            <ul id="modal-proj-highlights" class="space-y-2.5 text-sm text-slate-300 leading-relaxed pl-1"></ul>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Archivos y Links -->
+                    <div id="mtab-files" class="hidden space-y-4">
+                        <p class="text-xs font-mono text-slate-400 uppercase tracking-wider">Recursos &amp; Entregables del Proyecto</p>
+                        <div id="modal-proj-files" class="grid grid-cols-1 gap-3"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Visor Embebido: Abrir proyecto dentro del mismo portfolio -->
+    <div id="project-viewer-modal" class="fixed inset-0 z-[75] hidden flex-col bg-obsidian">
+        <div class="flex items-center justify-between px-4 py-3 bg-velvet border-b border-white/15">
+            <div class="flex items-center gap-3">
+                <button onclick="closeProjectViewer()" class="px-3.5 py-2 rounded-xl bg-neonViolet/20 hover:bg-neonViolet/35 border border-neonViolet/40 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Volver al portfolio</span>
+                </button>
+                <span id="viewer-title" class="text-sm font-bold text-white truncate">Proyecto</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <a id="viewer-download-link" href="#" download class="hidden px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Descargar</span>
+                </a>
+                <a id="viewer-external-link" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-colors">
+                    <span class="hidden sm:inline">Abrir afuera</span>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        </div>
+        <iframe id="project-viewer-frame" src="about:blank" class="w-full flex-1 border-0 bg-white"></iframe>
+    </div>
+
+    <!-- Lightbox: Recuadro ampliado de imagen -->
+    <div id="image-lightbox" onclick="if(event.target===this) closeImageLightbox()" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div class="relative flex flex-col items-center gap-3 p-3 rounded-3xl bg-velvet border-2 border-neonViolet/60 shadow-[0_25px_70px_rgba(139,92,246,0.45)] max-w-[560px] w-[90vw] animate-pop-out">
+            <button onclick="closeImageLightbox()" class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/70 hover:bg-neonViolet text-white flex items-center justify-center transition-colors cursor-pointer" title="Cerrar">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <img id="lightbox-img" src="" alt="Vista ampliada" class="w-full max-h-[65vh] object-contain rounded-2xl bg-obsidian">
+            <span id="lightbox-caption" class="px-3 py-1 rounded-full bg-white/10 text-xs font-mono text-slate-200"></span>
+        </div>
+    </div>
+
+    <!-- Toast de Notificación (Reemplazo elegante de alert) -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-xl bg-velvet border border-neonCyan/50 text-white text-xs font-medium shadow-xl flex items-center gap-2.5">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-neonCyan"></i>
+        <span id="toast-message">Acción completada</span>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="w-full max-w-6xl mx-auto px-4 py-4 text-center text-xs font-mono text-slate-500">
+        Toca el mazo o usa los botones para explorar las cartas • Prototipo Interactivo
+    </footer>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        // =========================================================================
+        // 1. DATOS DEL PORTFOLIO (PERSONALIZABLES CON TUS TEXTOS Y ARCHIVOS)
+        // =========================================================================
+        const brunoAvatarFallback = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320">
+                <defs>
+                    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#1e1938"/>
+                        <stop offset="100%" stop-color="#09080f"/>
+                    </linearGradient>
+                    <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#27272a"/>
+                        <stop offset="100%" stop-color="#09090b"/>
+                    </linearGradient>
+                </defs>
+                <rect width="400" height="320" fill="url(#bg)"/>
+                <circle cx="310" cy="70" r="90" fill="#8b5cf6" fill-opacity="0.14"/>
+                <circle cx="80" cy="260" r="100" fill="#06b6d4" fill-opacity="0.12"/>
+                <!-- Monitor de taller de fondo -->
+                <rect x="275" y="135" width="95" height="65" rx="6" fill="#18181b" stroke="#3f3f46" stroke-width="3"/>
+                <rect x="283" y="143" width="79" height="45" rx="2" fill="#0f172a"/>
+                <line x1="292" y1="155" x2="335" y2="155" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
+                <line x1="292" y1="166" x2="350" y2="166" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round"/>
+                <line x1="292" y1="177" x2="322" y2="177" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+                <rect x="315" y="200" width="16" height="22" fill="#3f3f46"/>
+                <!-- Campera negra y capucha -->
+                <path d="M90 320 C90 235, 130 205, 200 205 C270 205, 310 235, 310 320 Z" fill="url(#jacket)" stroke="#3f3f46" stroke-width="2"/>
+                <path d="M128 210 C115 160, 135 82, 200 82 C265 82, 285 160, 272 210" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
+                <!-- Cuello y rostro -->
+                <rect x="180" y="185" width="40" height="35" rx="12" fill="#d49b76"/>
+                <path d="M148 135 C148 95, 252 95, 252 135 C252 182, 228 205, 200 205 C172 205, 148 182, 148 135 Z" fill="#e0ab86"/>
+                <!-- Pelo platinado -->
+                <path d="M145 130 C142 82, 172 68, 200 68 C228 68, 258 82, 255 130 C244 114, 232 118, 220 112 C208 120, 192 120, 180 112 C168 118, 156 114, 145 130 Z" fill="#e2e8f0"/>
+                <path d="M152 124 L165 106 L178 122 L192 104 L205 122 L218 105 L232 122 L246 108" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+                <!-- Ojos y anteojos negros -->
+                <circle cx="177" cy="144" r="4" fill="#1e1b18"/>
+                <circle cx="223" cy="144" r="4" fill="#1e1b18"/>
+                <rect x="155" y="131" width="38" height="25" rx="6" fill="rgba(255,255,255,0.06)" stroke="#09090b" stroke-width="4.5"/>
+                <rect x="207" y="131" width="38" height="25" rx="6" fill="rgba(255,255,255,0.06)" stroke="#09090b" stroke-width="4.5"/>
+                <line x1="193" y1="141" x2="207" y2="141" stroke="#09090b" stroke-width="4.5"/>
+                <!-- Nariz y boca -->
+                <path d="M200 144 L196 163 L204 163" fill="none" stroke="#b87d56" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M188 179 Q200 183 212 179" fill="none" stroke="#9f5f47" stroke-width="2.8" stroke-linecap="round"/>
+            </svg>
+        `);
+
+        const travelHeroMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <defs>
+                    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#1e3a8a"/>
+                        <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                </defs>
+                <rect width="800" height="500" fill="url(#sky)"/>
+                <rect x="0" y="0" width="800" height="54" fill="#ffffff" fill-opacity="0.95"/>
+                <rect x="36" y="14" width="26" height="26" rx="6" fill="#3b82f6"/>
+                <text x="72" y="33" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1e293b">Viajes Los Choris</text>
+                <text x="400" y="155" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="bold" fill="#ffffff">Tu próxima aventura empieza acá</text>
+                <text x="400" y="185" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#cbd5e1">Los mejores destinos, los mejores precios</text>
+                <rect x="110" y="215" width="580" height="125" rx="16" fill="#ffffff"/>
+                <rect x="132" y="232" width="170" height="42" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+                <text x="145" y="248" font-family="sans-serif" font-size="10" fill="#64748b">Origen</text>
+                <text x="145" y="264" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">Buenos Aires</text>
+                <rect x="315" y="232" width="170" height="42" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+                <text x="328" y="248" font-family="sans-serif" font-size="10" fill="#64748b">Destino</text>
+                <text x="328" y="264" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">Córdoba</text>
+                <rect x="498" y="232" width="170" height="42" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+                <text x="511" y="248" font-family="sans-serif" font-size="10" fill="#64748b">Fecha</text>
+                <text x="511" y="264" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">29/03/2026</text>
+                <rect x="132" y="286" width="536" height="38" rx="8" fill="#4f7cac"/>
+                <text x="400" y="310" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Buscar mi viaje</text>
+            </svg>
+        `);
+
+        const travelCartMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#f8fafc"/>
+                <rect x="0" y="0" width="800" height="52" fill="#ffffff" stroke="#e2e8f0"/>
+                <text x="36" y="32" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1e293b">Viajes Los Choris — Carrito (2 viajes • 3 pasajeros)</text>
+                <rect x="36" y="76" width="465" height="165" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+                <text x="56" y="108" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">Buenos Aires → Mar del Plata</text>
+                <rect x="295" y="92" width="68" height="22" rx="6" fill="#f97316"/>
+                <text x="329" y="107" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff">-15% OFF</text>
+                <text x="56" y="132" font-family="sans-serif" font-size="12" fill="#64748b">Servicio Premium • WiFi • TV • A/C</text>
+                <text x="56" y="210" font-family="sans-serif" font-size="12" fill="#334155">2 Pasajeros | Asientos: 15A, 15B</text>
+                <text x="480" y="212" text-anchor="end" font-family="sans-serif" font-size="20" font-weight="bold" fill="#0f172a">$90.00</text>
+                <rect x="36" y="260" width="465" height="145" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+                <text x="56" y="292" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">Córdoba → Rosario</text>
+                <text x="56" y="316" font-family="sans-serif" font-size="12" fill="#64748b">Servicio Ejecutivo • Duración: 4h 45min</text>
+                <text x="56" y="380" font-family="sans-serif" font-size="12" fill="#334155">1 Pasajero | Asiento: 08C</text>
+                <text x="480" y="382" text-anchor="end" font-family="sans-serif" font-size="20" font-weight="bold" fill="#0f172a">$38.50</text>
+                <rect x="520" y="76" width="244" height="329" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+                <text x="540" y="108" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">Resumen de Compra</text>
+                <text x="540" y="142" font-family="sans-serif" font-size="12" fill="#64748b">Subtotal (3 pasajeros)</text>
+                <text x="744" y="142" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">$128.50</text>
+                <text x="540" y="168" font-family="sans-serif" font-size="12" fill="#ef4444">Descuento aplicado</text>
+                <text x="744" y="168" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ef4444">-$15.88</text>
+                <line x1="540" y1="215" x2="744" y2="215" stroke="#e2e8f0"/>
+                <text x="540" y="248" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0f172a">Total a Pagar</text>
+                <text x="744" y="248" text-anchor="end" font-family="sans-serif" font-size="22" font-weight="bold" fill="#0f172a">$122.90</text>
+                <rect x="540" y="340" width="204" height="42" rx="8" fill="#4f7cac"/>
+                <text x="642" y="366" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ffffff">Continuar con la Compra</text>
+            </svg>
+        `);
+
+        const travelDbMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#09080f"/>
+                <text x="40" y="45" font-family="monospace" font-size="16" font-weight="bold" fill="#06b6d4">ARQUITECTURA & MODELO RELACIONAL (11 ENTIDADES)</text>
+                <rect x="45" y="80" width="160" height="120" rx="8" fill="#131022" stroke="#8b5cf6" stroke-width="2"/>
+                <text x="125" y="105" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">USUARIO</text>
+                <text x="60" y="130" font-family="monospace" font-size="11" fill="#fbbf24">PK id_usuario</text>
+                <text x="60" y="150" font-family="monospace" font-size="11" fill="#cbd5e1">nombre / email</text>
+                <text x="60" y="170" font-family="monospace" font-size="11" fill="#cbd5e1">rol / password_hash</text>
+                <rect x="315" y="80" width="170" height="135" rx="8" fill="#131022" stroke="#06b6d4" stroke-width="2"/>
+                <text x="400" y="105" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">PAQUETE</text>
+                <text x="330" y="130" font-family="monospace" font-size="11" fill="#fbbf24">PK id_paquete</text>
+                <text x="330" y="150" font-family="monospace" font-size="11" fill="#38bdf8">FK id_hotel / id_viaje</text>
+                <text x="330" y="170" font-family="monospace" font-size="11" fill="#cbd5e1">dias / actividades</text>
+                <text x="330" y="190" font-family="monospace" font-size="11" fill="#34d399">precio</text>
+                <rect x="590" y="80" width="165" height="120" rx="8" fill="#131022" stroke="#8b5cf6" stroke-width="2"/>
+                <text x="672" y="105" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">CARRITO</text>
+                <text x="605" y="130" font-family="monospace" font-size="11" fill="#fbbf24">PK id_carrito</text>
+                <text x="605" y="150" font-family="monospace" font-size="11" fill="#38bdf8">FK id_usuario</text>
+                <text x="605" y="170" font-family="monospace" font-size="11" fill="#cbd5e1">descuento_final</text>
+                <rect x="175" y="280" width="180" height="130" rx="8" fill="#131022" stroke="#f59e0b" stroke-width="2"/>
+                <text x="265" y="305" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">VIAJE & RUTA</text>
+                <text x="190" y="330" font-family="monospace" font-size="11" fill="#fbbf24">PK id_viaje / id_ruta</text>
+                <text x="190" y="350" font-family="monospace" font-size="11" fill="#cbd5e1">origen → destino</text>
+                <text x="190" y="370" font-family="monospace" font-size="11" fill="#cbd5e1">colectivo / conductor</text>
+                <rect x="445" y="280" width="180" height="130" rx="8" fill="#131022" stroke="#10b981" stroke-width="2"/>
+                <text x="535" y="305" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">HOTEL & PARADAS</text>
+                <text x="460" y="330" font-family="monospace" font-size="11" fill="#fbbf24">PK id_hotel / id_parada</text>
+                <text x="460" y="350" font-family="monospace" font-size="11" fill="#cbd5e1">zona / valoracion</text>
+                <text x="460" y="370" font-family="monospace" font-size="11" fill="#cbd5e1">terminal / direccion</text>
+                <line x1="205" y1="140" x2="315" y2="140" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,5"/>
+                <line x1="485" y1="140" x2="590" y2="140" stroke="#06b6d4" stroke-width="2" stroke-dasharray="5,5"/>
+                <line x1="360" y1="215" x2="290" y2="280" stroke="#f59e0b" stroke-width="2"/>
+                <line x1="440" y1="215" x2="510" y2="280" stroke="#10b981" stroke-width="2"/>
+            </svg>
+        `);
+
+        const bebidasOrdersMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <rect x="0" y="0" width="800" height="58" fill="#1e293b"/>
+                <circle cx="44" cy="29" r="16" fill="#7c3aed" stroke="#c084fc" stroke-width="2"/>
+                <text x="44" y="34" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff">31</text>
+                <text x="72" y="27" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">La 31 Bebidas</text>
+                <text x="72" y="43" font-family="monospace" font-size="10" fill="#22c55e">● Conectado a Firestore</text>
+                <rect x="36" y="76" width="170" height="62" rx="10" fill="#1e293b" stroke="#334155"/>
+                <text x="50" y="98" font-family="sans-serif" font-size="11" fill="#94a3b8">Productos</text>
+                <text x="50" y="124" font-family="sans-serif" font-size="22" font-weight="bold" fill="#f8fafc">14</text>
+                <rect x="222" y="76" width="170" height="62" rx="10" fill="#1e293b" stroke="#334155"/>
+                <text x="236" y="98" font-family="sans-serif" font-size="11" fill="#94a3b8">Unidades en stock</text>
+                <text x="236" y="124" font-family="sans-serif" font-size="22" font-weight="bold" fill="#f8fafc">248</text>
+                <rect x="408" y="76" width="170" height="62" rx="10" fill="#1e293b" stroke="#f59e0b"/>
+                <text x="422" y="98" font-family="sans-serif" font-size="11" fill="#94a3b8">Stock bajo</text>
+                <text x="422" y="124" font-family="sans-serif" font-size="22" font-weight="bold" fill="#f59e0b">2</text>
+                <rect x="594" y="76" width="170" height="62" rx="10" fill="#1e293b" stroke="#334155"/>
+                <text x="608" y="98" font-family="sans-serif" font-size="11" fill="#94a3b8">Valor estimado</text>
+                <text x="608" y="124" font-family="sans-serif" font-size="20" font-weight="bold" fill="#22c55e">$642.000</text>
+                <rect x="36" y="158" width="728" height="118" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="56" y="186" font-family="sans-serif" font-size="14" font-weight="bold" fill="#f8fafc">Nuevo pedido / venta (precio automático por producto)</text>
+                <rect x="56" y="204" width="160" height="40" rx="8" fill="#0f172a" stroke="#334155"/>
+                <text x="68" y="229" font-family="sans-serif" font-size="12" fill="#e2e8f0">Juan Pérez</text>
+                <rect x="228" y="204" width="210" height="40" rx="8" fill="#0f172a" stroke="#334155"/>
+                <text x="240" y="229" font-family="sans-serif" font-size="12" fill="#e2e8f0">Coca-Cola 2.25L — $3.500</text>
+                <rect x="450" y="204" width="70" height="40" rx="8" fill="#0f172a" stroke="#334155"/>
+                <text x="485" y="229" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#e2e8f0">4</text>
+                <rect x="532" y="204" width="100" height="40" rx="8" fill="#0f172a" stroke="#22c55e"/>
+                <text x="582" y="229" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="bold" fill="#22c55e">$14.000</text>
+                <rect x="644" y="204" width="100" height="40" rx="8" fill="#3b82f6"/>
+                <text x="694" y="229" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff">Registrar</text>
+                <rect x="36" y="294" width="728" height="170" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="56" y="324" font-family="monospace" font-size="11" fill="#94a3b8">CLIENTE             PRODUCTO             CANT.    TOTAL      ESTADO</text>
+                <line x1="56" y1="336" x2="744" y2="336" stroke="#334155"/>
+                <text x="56" y="366" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f8fafc">Juan Pérez</text>
+                <text x="200" y="366" font-family="sans-serif" font-size="13" fill="#cbd5e1">Coca-Cola 2.25L</text>
+                <text x="365" y="366" font-family="sans-serif" font-size="13" fill="#cbd5e1">4 u.</text>
+                <text x="440" y="366" font-family="sans-serif" font-size="13" font-weight="bold" fill="#22c55e">$14.000</text>
+                <rect x="545" y="350" width="66" height="22" rx="11" fill="#14532d"/>
+                <text x="578" y="365" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#86efac">Activo</text>
+                <line x1="56" y1="386" x2="744" y2="386" stroke="#334155"/>
+                <text x="56" y="418" font-family="sans-serif" font-size="13" fill="#94a3b8" text-decoration="line-through">Lucas Gómez</text>
+                <text x="200" y="418" font-family="sans-serif" font-size="13" fill="#94a3b8" text-decoration="line-through">Fernet Branca 700ml</text>
+                <text x="365" y="418" font-family="sans-serif" font-size="13" fill="#94a3b8">2 u.</text>
+                <text x="440" y="418" font-family="sans-serif" font-size="13" fill="#94a3b8">$24.000</text>
+                <rect x="545" y="402" width="84" height="22" rx="11" fill="#7f1d1d"/>
+                <text x="587" y="417" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fca5a5">Cancelado</text>
+            </svg>
+        `);
+
+        const bebidasStockMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <text x="40" y="48" font-family="sans-serif" font-size="18" font-weight="bold" fill="#f8fafc">Stock de Bebidas en Tiempo Real (Cloud Firestore)</text>
+                <rect x="40" y="76" width="225" height="175" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="58" y="108" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Coca-Cola</text>
+                <text x="58" y="128" font-family="sans-serif" font-size="12" fill="#94a3b8">2.25L · Gaseosas</text>
+                <rect x="58" y="144" width="189" height="44" rx="8" fill="#0f172a"/>
+                <text x="72" y="172" font-family="sans-serif" font-size="18" font-weight="bold" fill="#22c55e">36 u.</text>
+                <text x="195" y="172" font-family="monospace" font-size="14" fill="#e2e8f0">−  +</text>
+                <text x="58" y="226" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">$3.500</text>
+                <rect x="288" y="76" width="225" height="175" rx="12" fill="#1e293b" stroke="#f59e0b"/>
+                <text x="306" y="108" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Cerveza Quilmes</text>
+                <text x="306" y="128" font-family="sans-serif" font-size="12" fill="#94a3b8">473ml · Cervezas</text>
+                <rect x="306" y="144" width="189" height="44" rx="8" fill="#0f172a"/>
+                <text x="320" y="172" font-family="sans-serif" font-size="18" font-weight="bold" fill="#f59e0b">4 u.</text>
+                <text x="443" y="172" font-family="monospace" font-size="14" fill="#e2e8f0">−  +</text>
+                <text x="306" y="226" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">$1.800</text>
+                <rect x="536" y="76" width="225" height="175" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="554" y="108" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Fernet Branca</text>
+                <text x="554" y="128" font-family="sans-serif" font-size="12" fill="#94a3b8">700ml · Aperitivos</text>
+                <rect x="554" y="144" width="189" height="44" rx="8" fill="#0f172a"/>
+                <text x="568" y="172" font-family="sans-serif" font-size="18" font-weight="bold" fill="#22c55e">18 u.</text>
+                <text x="691" y="172" font-family="monospace" font-size="14" fill="#e2e8f0">−  +</text>
+                <text x="554" y="226" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">$12.000</text>
+                <rect x="40" y="280" width="721" height="175" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="60" y="314" font-family="sans-serif" font-size="14" font-weight="bold" fill="#38bdf8">Tamaños estandarizados y alertas automáticas</text>
+                <text x="60" y="346" font-family="monospace" font-size="12" fill="#cbd5e1">Selector de tamaño: 473ml | 700ml | 1L | 1.5L | 2.25L | 2.50L</text>
+                <text x="60" y="378" font-family="sans-serif" font-size="13" fill="#94a3b8">• Cada actualización sincroniza al instante en todos los dispositivos con onSnapshot.</text>
+                <text x="60" y="406" font-family="sans-serif" font-size="13" fill="#94a3b8">• Las cancelaciones devuelven el stock automáticamente mediante runTransaction.</text>
+            </svg>
+        `);
+
+        const bebidasArchMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#09080f"/>
+                <text x="40" y="45" font-family="monospace" font-size="16" font-weight="bold" fill="#06b6d4">ARQUITECTURA SERVERLESS — FIREBASE &amp; FIRESTORE NoSQL</text>
+                <rect x="45" y="90" width="200" height="150" rx="10" fill="#131022" stroke="#8b5cf6" stroke-width="2"/>
+                <text x="145" y="118" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">drinks (Stock)</text>
+                <text x="62" y="145" font-family="monospace" font-size="11" fill="#cbd5e1">name / brand / size</text>
+                <text x="62" y="168" font-family="monospace" font-size="11" fill="#34d399">price / stock / minStock</text>
+                <text x="62" y="191" font-family="monospace" font-size="11" fill="#fbbf24">createdBy / updatedAt</text>
+                <rect x="300" y="90" width="210" height="150" rx="10" fill="#131022" stroke="#06b6d4" stroke-width="2"/>
+                <text x="405" y="118" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">orders (Pedidos)</text>
+                <text x="316" y="145" font-family="monospace" font-size="11" fill="#cbd5e1">cliente / producto</text>
+                <text x="316" y="168" font-family="monospace" font-size="11" fill="#34d399">cantidad / precioUnitario</text>
+                <text x="316" y="191" font-family="monospace" font-size="11" fill="#f87171">status: activo|cancelado</text>
+                <text x="316" y="214" font-family="monospace" font-size="11" fill="#fbbf24">delete: false (Soft Del)</text>
+                <rect x="565" y="90" width="190" height="150" rx="10" fill="#131022" stroke="#f59e0b" stroke-width="2"/>
+                <text x="660" y="118" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#f8fafc">movements</text>
+                <text x="582" y="145" font-family="monospace" font-size="11" fill="#cbd5e1">type: in | out</text>
+                <text x="582" y="168" font-family="monospace" font-size="11" fill="#38bdf8">prevStock → newStock</text>
+                <text x="582" y="191" font-family="monospace" font-size="11" fill="#fbbf24">append-only (auditoría)</text>
+                <rect x="45" y="290" width="710" height="150" rx="10" fill="#131022" stroke="#22c55e" stroke-width="2"/>
+                <text x="400" y="322" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold" fill="#86efac">SEGURIDAD &amp; DESPLIEGUE (Firebase CLI + Vite)</text>
+                <text x="70" y="355" font-family="monospace" font-size="12" fill="#e2e8f0">• Auth: Google Sign-In (OAuth 2.0) obligatorio en firestore.rules</text>
+                <text x="70" y="382" font-family="monospace" font-size="12" fill="#e2e8f0">• Atomicidad: runTransaction() actualiza drinks + orders + movements juntos</text>
+                <text x="70" y="409" font-family="monospace" font-size="12" fill="#e2e8f0">• Producción: https://pedidosbebidas-b8b6c.web.app (southamerica-east1)</text>
+            </svg>
+        `);
+
+        const forrajeriaCatalogoMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f1a17"/>
+                <rect x="0" y="0" width="800" height="72" fill="#14532d"/>
+                <text x="36" y="34" font-family="sans-serif" font-size="19" font-weight="bold" fill="#f0fdf4">Forrajería Mis Viejos</text>
+                <text x="36" y="54" font-family="sans-serif" font-size="11" fill="#bbf7d0">Calle 149 entre 49a y 50 N°4978</text>
+                <rect x="405" y="20" width="82" height="32" rx="8" fill="#166534" stroke="#86efac"/>
+                <text x="446" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff">Catálogo</text>
+                <rect x="497" y="20" width="86" height="32" rx="8" fill="#15803d"/>
+                <text x="540" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#dcfce7">Inventario</text>
+                <rect x="593" y="20" width="76" height="32" rx="8" fill="#15803d"/>
+                <text x="631" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#dcfce7">Pedidos</text>
+                <rect x="679" y="20" width="96" height="32" rx="8" fill="#15803d"/>
+                <text x="727" y="40" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#dcfce7">Distribuidoras</text>
+                <text x="36" y="110" font-family="sans-serif" font-size="17" font-weight="bold" fill="#f8fafc">Catálogo de Productos</text>
+                <rect x="36" y="130" width="230" height="150" rx="12" fill="#132a24" stroke="#1f4d3f"/>
+                <text x="54" y="160" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Alfalfa Premium</text>
+                <text x="54" y="180" font-family="monospace" font-size="11" fill="#86efac">Alimento · Stock: 120 kg</text>
+                <text x="54" y="204" font-family="sans-serif" font-size="11" fill="#94a3b8">Primera calidad bovinos y equinos</text>
+                <text x="54" y="256" font-family="sans-serif" font-size="18" font-weight="bold" fill="#4ade80">$850 / kg</text>
+                <rect x="285" y="130" width="230" height="150" rx="12" fill="#132a24" stroke="#f59e0b"/>
+                <text x="303" y="160" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Pellet de Soja</text>
+                <text x="303" y="180" font-family="monospace" font-size="11" fill="#fbbf24">Alimento · Stock bajo: 15 kg</text>
+                <text x="303" y="204" font-family="sans-serif" font-size="11" fill="#94a3b8">Alto contenido proteico</text>
+                <text x="303" y="256" font-family="sans-serif" font-size="18" font-weight="bold" fill="#4ade80">$960 / kg</text>
+                <rect x="534" y="130" width="230" height="150" rx="12" fill="#132a24" stroke="#1f4d3f"/>
+                <text x="552" y="160" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Bebedero Automático</text>
+                <text x="552" y="180" font-family="monospace" font-size="11" fill="#38bdf8">Accesorio · Stock: 8 u.</text>
+                <text x="552" y="204" font-family="sans-serif" font-size="11" fill="#94a3b8">Acero inoxidable para bovinos</text>
+                <text x="552" y="256" font-family="sans-serif" font-size="18" font-weight="bold" fill="#4ade80">$3.500 / u.</text>
+                <rect x="36" y="305" width="728" height="155" rx="12" fill="#132a24" stroke="#1f4d3f"/>
+                <text x="56" y="338" font-family="sans-serif" font-size="14" font-weight="bold" fill="#86efac">Gestión Integral + Respaldo JSON</text>
+                <text x="56" y="368" font-family="sans-serif" font-size="13" fill="#cbd5e1">• Catálogo filtrable (Alimentos, Semillas, Accesorios) y buscador en tiempo real.</text>
+                <text x="56" y="396" font-family="sans-serif" font-size="13" fill="#cbd5e1">• Alertas de stock mínimo y pedidos a distribuidoras con envío directo por WhatsApp.</text>
+                <text x="56" y="424" font-family="sans-serif" font-size="13" fill="#cbd5e1">• Persistencia en localStorage con exportación e importación de respaldo JSON.</text>
+            </svg>
+        `);
+
+        const forrajeriaPedidosMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#09080f"/>
+                <text x="40" y="48" font-family="monospace" font-size="16" font-weight="bold" fill="#4ade80">MÓDULOS — FORRAJERÍA MIS VIEJOS (HTML / CSS / JS)</text>
+                <rect x="45" y="84" width="340" height="170" rx="12" fill="#131022" stroke="#22c55e" stroke-width="2"/>
+                <text x="68" y="118" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Pedidos a Distribuidoras</text>
+                <text x="68" y="148" font-family="sans-serif" font-size="12" fill="#cbd5e1">• Selección de distribuidora + WhatsApp</text>
+                <text x="68" y="174" font-family="sans-serif" font-size="12" fill="#cbd5e1">• Múltiples productos por pedido</text>
+                <text x="68" y="200" font-family="sans-serif" font-size="12" fill="#cbd5e1">• Cálculo de total estimado</text>
+                <text x="68" y="226" font-family="sans-serif" font-size="12" fill="#4ade80">• Botón Enviar Pedido por WhatsApp</text>
+                <rect x="415" y="84" width="340" height="170" rx="12" fill="#131022" stroke="#f59e0b" stroke-width="2"/>
+                <text x="438" y="118" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Inventario &amp; Alertas</text>
+                <text x="438" y="148" font-family="sans-serif" font-size="12" fill="#cbd5e1">• CRUD completo de productos</text>
+                <text x="438" y="174" font-family="sans-serif" font-size="12" fill="#cbd5e1">• Unidades: kg, bolsa, unidad, litro</text>
+                <text x="438" y="200" font-family="sans-serif" font-size="12" fill="#fbbf24">• Alertas automáticas de stock mínimo</text>
+                <text x="438" y="226" font-family="sans-serif" font-size="12" fill="#cbd5e1">• Búsqueda instantánea</text>
+                <rect x="45" y="284" width="710" height="150" rx="12" fill="#131022" stroke="#06b6d4" stroke-width="2"/>
+                <text x="400" y="320" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold" fill="#38bdf8">PERSISTENCIA &amp; SEGURIDAD FRONTEND</text>
+                <text x="72" y="354" font-family="monospace" font-size="12" fill="#e2e8f0">• Almacenamiento en localStorage (productos, pedidos y distribuidoras)</text>
+                <text x="72" y="382" font-family="monospace" font-size="12" fill="#e2e8f0">• Exportar / Importar respaldo completo en JSON + Restablecer demo</text>
+                <text x="72" y="410" font-family="monospace" font-size="12" fill="#e2e8f0">• Sanitización de HTML (esc()) para prevenir inyección XSS</text>
+            </svg>
+        `);
+
+        const cursosSymMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <rect x="0" y="0" width="800" height="62" fill="#1e293b"/>
+                <text x="36" y="38" font-family="sans-serif" font-size="19" font-weight="bold" fill="#f8fafc">Cursos SyM — Plataforma de Cursos Online</text>
+                <rect x="655" y="16" width="110" height="30" rx="8" fill="#8b5cf6"/>
+                <text x="710" y="36" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff">PWA + Web</text>
+                <rect x="36" y="86" width="230" height="165" rx="14" fill="#1e293b" stroke="#334155"/>
+                <text x="54" y="118" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Catálogo de Cursos</text>
+                <text x="54" y="144" font-family="sans-serif" font-size="12" fill="#94a3b8">• Clases y módulos online</text>
+                <text x="54" y="168" font-family="sans-serif" font-size="12" fill="#94a3b8">• Multimedia con Cloudinary</text>
+                <text x="54" y="192" font-family="sans-serif" font-size="12" fill="#38bdf8">• Instalable como PWA</text>
+                <rect x="285" y="86" width="230" height="165" rx="14" fill="#1e293b" stroke="#06b6d4"/>
+                <text x="303" y="118" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Pagos Online</text>
+                <text x="303" y="144" font-family="sans-serif" font-size="12" fill="#94a3b8">• Integración Mercado Pago</text>
+                <text x="303" y="168" font-family="sans-serif" font-size="12" fill="#94a3b8">• Checkout seguro</text>
+                <text x="303" y="192" font-family="sans-serif" font-size="12" fill="#4ade80">• Activación de acceso</text>
+                <rect x="534" y="86" width="230" height="165" rx="14" fill="#1e293b" stroke="#8b5cf6"/>
+                <text x="552" y="118" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Backend &amp; Datos</text>
+                <text x="552" y="144" font-family="sans-serif" font-size="12" fill="#94a3b8">• API Node.js + Express</text>
+                <text x="552" y="168" font-family="sans-serif" font-size="12" fill="#94a3b8">• Firebase Admin SDK</text>
+                <text x="552" y="192" font-family="sans-serif" font-size="12" fill="#fbbf24">• Service Worker (sw.js)</text>
+                <rect x="36" y="276" width="728" height="180" rx="14" fill="#131022" stroke="#334155"/>
+                <text x="58" y="312" font-family="monospace" font-size="14" font-weight="bold" fill="#06b6d4">ARQUITECTURA FULL-STACK — CURSOS SyM</text>
+                <text x="58" y="346" font-family="monospace" font-size="12" fill="#e2e8f0">• Frontend: HTML5, CSS3, JavaScript, Manifest PWA y Service Worker</text>
+                <text x="58" y="376" font-family="monospace" font-size="12" fill="#e2e8f0">• Backend: server.js (Express + CORS + dotenv + Firebase Admin)</text>
+                <text x="58" y="406" font-family="monospace" font-size="12" fill="#e2e8f0">• Servicios: Mercado Pago (cobros) + Cloudinary (imágenes/videos)</text>
+            </svg>
+        `);
+
+        const perrobotCircuitMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <rect x="0" y="0" width="800" height="60" fill="#1e293b"/>
+                <text x="36" y="37" font-family="sans-serif" font-size="19" font-weight="bold" fill="#f8fafc">PROYECTO PERROBOT — Arduino Nano + Impresión 3D</text>
+                <rect x="640" y="15" width="126" height="30" rx="8" fill="#3b82f6"/>
+                <text x="703" y="35" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff">E.E.S.T. N°5</text>
+                <rect x="295" y="120" width="210" height="230" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="2.5"/>
+                <text x="400" y="155" text-anchor="middle" font-family="monospace" font-size="15" font-weight="bold" fill="#38bdf8">ARDUINO NANO</text>
+                <text x="400" y="182" text-anchor="middle" font-family="monospace" font-size="11" fill="#94a3b8">Unidad de Control Central</text>
+                <text x="320" y="220" font-family="monospace" font-size="12" fill="#f87171">D10 / D11 → 2 LEDs Rojos</text>
+                <text x="320" y="250" font-family="monospace" font-size="12" fill="#34d399">D3 (PWM) → Servo SG90</text>
+                <text x="320" y="280" font-family="monospace" font-size="12" fill="#fbbf24">D2       → Buzzer</text>
+                <text x="320" y="310" font-family="monospace" font-size="12" fill="#cbd5e1">+5V / GND Común</text>
+                <rect x="40" y="110" width="205" height="105" rx="12" fill="#1e293b" stroke="#34d399" stroke-width="2"/>
+                <text x="58" y="142" font-family="sans-serif" font-size="14" font-weight="bold" fill="#f8fafc">Cola Móvil (SG90)</text>
+                <text x="58" y="166" font-family="monospace" font-size="11" fill="#34d399">Pin D3 · PWM 60°–120°</text>
+                <text x="58" y="190" font-family="sans-serif" font-size="11" fill="#94a3b8">Oscilación calibrada en 3D</text>
+                <rect x="40" y="245" width="205" height="105" rx="12" fill="#1e293b" stroke="#f87171" stroke-width="2"/>
+                <text x="58" y="277" font-family="sans-serif" font-size="14" font-weight="bold" fill="#f8fafc">Ojos (2 LEDs Rojos)</text>
+                <text x="58" y="301" font-family="monospace" font-size="11" fill="#f87171">Pines D10 &amp; D11 + 220 Ω</text>
+                <text x="58" y="325" font-family="sans-serif" font-size="11" fill="#94a3b8">Protección contra sobrecorriente</text>
+                <rect x="555" y="175" width="205" height="115" rx="12" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/>
+                <text x="573" y="207" font-family="sans-serif" font-size="14" font-weight="bold" fill="#f8fafc">Ladrido (Buzzer)</text>
+                <text x="573" y="231" font-family="monospace" font-size="11" fill="#fbbf24">Pin D2 · tone() 550/420 Hz</text>
+                <text x="573" y="255" font-family="sans-serif" font-size="11" fill="#94a3b8">Doble ladrido sintetizado</text>
+                <line x1="245" y1="162" x2="295" y2="245" stroke="#34d399" stroke-width="2"/>
+                <line x1="245" y1="297" x2="295" y2="215" stroke="#f87171" stroke-width="2"/>
+                <line x1="505" y1="275" x2="555" y2="232" stroke="#fbbf24" stroke-width="2"/>
+                <rect x="40" y="380" width="720" height="86" rx="12" fill="#1e293b" stroke="#334155"/>
+                <text x="62" y="412" font-family="monospace" font-size="12" font-weight="bold" fill="#38bdf8">EQUIPO: Bruno Tejeda (Documentación) · Nicolás González (Arduino) · Selena Ruiz Díaz (3D)</text>
+                <text x="62" y="440" font-family="sans-serif" font-size="12" fill="#94a3b8">Documentación integral: Gantt (8 sem), Flujo, DFD Nivel 0/1, Casos de Uso UML, DER y Anexo C++.</text>
+            </svg>
+        `);
+
+        const perrobotCodeMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <text x="40" y="46" font-family="monospace" font-size="16" font-weight="bold" fill="#38bdf8">CÓDIGO FUENTE ARDUINO IDE — PERROBOT.ino</text>
+                <rect x="40" y="70" width="720" height="390" rx="14" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+                <text x="65" y="108" font-family="monospace" font-size="13" fill="#c084fc">#include &lt;Servo.h&gt;</text>
+                <text x="65" y="136" font-family="monospace" font-size="13" fill="#94a3b8">const int pinBuzzer = 2, pinServo = 3, pinOjo1 = 10, pinOjo2 = 11;</text>
+                <text x="65" y="172" font-family="monospace" font-size="13" fill="#38bdf8">void ladrar() {</text>
+                <text x="85" y="198" font-family="monospace" font-size="13" fill="#e2e8f0">tone(pinBuzzer, 550, 140); delay(180);</text>
+                <text x="85" y="224" font-family="monospace" font-size="13" fill="#e2e8f0">tone(pinBuzzer, 420, 180); delay(350);</text>
+                <text x="65" y="250" font-family="monospace" font-size="13" fill="#38bdf8">}</text>
+                <text x="65" y="286" font-family="monospace" font-size="13" fill="#34d399">void moverCola() {</text>
+                <text x="85" y="312" font-family="monospace" font-size="13" fill="#e2e8f0">for (int pos = 60; pos &lt;= 120; pos += 5) { colaServo.write(pos); delay(20); }</text>
+                <text x="85" y="338" font-family="monospace" font-size="13" fill="#e2e8f0">for (int pos = 120; pos &gt;= 60; pos -= 5) { colaServo.write(pos); delay(20); }</text>
+                <text x="65" y="364" font-family="monospace" font-size="13" fill="#34d399">}</text>
+                <text x="65" y="400" font-family="monospace" font-size="13" fill="#fbbf24">void loop() { digitalWrite(pinOjo1,HIGH); moverCola(); moverCola(); ladrar(); delay(1000); }</text>
+            </svg>
+        `);
+
+        const techListAppMockup = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+                <rect width="800" height="500" fill="#0f172a"/>
+                <rect x="0" y="0" width="800" height="62" fill="#1e3a8a"/>
+                <text x="36" y="38" font-family="sans-serif" font-size="20" font-weight="bold" fill="#ffffff">Tech List — App para Profesores de Taller</text>
+                <rect x="655" y="16" width="110" height="30" rx="8" fill="#22c55e"/>
+                <text x="710" y="36" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#052e16">Android APK</text>
+                <rect x="36" y="88" width="230" height="175" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+                <text x="54" y="122" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Cursos y Materias</text>
+                <text x="54" y="148" font-family="sans-serif" font-size="12" fill="#94a3b8">• Cronograma organizado</text>
+                <text x="54" y="172" font-family="sans-serif" font-size="12" fill="#94a3b8">• Acceso rápido por curso</text>
+                <text x="54" y="196" font-family="sans-serif" font-size="12" fill="#38bdf8">• Sin papeles ni dispersión</text>
+                <rect x="285" y="88" width="230" height="175" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+                <text x="303" y="122" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Alumnos y Láminas</text>
+                <text x="303" y="148" font-family="sans-serif" font-size="12" fill="#94a3b8">• Seguimiento individual</text>
+                <text x="303" y="172" font-family="sans-serif" font-size="12" fill="#94a3b8">• Correcciones y notas</text>
+                <text x="303" y="196" font-family="sans-serif" font-size="12" fill="#4ade80">• Lenguajes Tecnológicos</text>
+                <rect x="534" y="88" width="230" height="175" rx="14" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                <text x="552" y="122" font-family="sans-serif" font-size="15" font-weight="bold" fill="#f8fafc">Materiales y Temas</text>
+                <text x="552" y="148" font-family="sans-serif" font-size="12" fill="#94a3b8">• Stock entregado por alumno</text>
+                <text x="552" y="172" font-family="sans-serif" font-size="12" fill="#94a3b8">• Registro de temas dados</text>
+                <text x="552" y="196" font-family="sans-serif" font-size="12" fill="#fbbf24">• Trazabilidad curricular</text>
+                <rect x="36" y="290" width="728" height="168" rx="14" fill="#1e293b" stroke="#334155"/>
+                <text x="58" y="324" font-family="monospace" font-size="13" font-weight="bold" fill="#38bdf8">INVESTIGACIÓN DE CAMPO — BRUNO TEJEDA &amp; NICOLÁS CABALLERO</text>
+                <text x="58" y="356" font-family="sans-serif" font-size="13" fill="#cbd5e1">• Basada en entrevistas directas y observación en clase con profesores de taller.</text>
+                <text x="58" y="384" font-family="sans-serif" font-size="13" fill="#cbd5e1">• 5 módulos: Cursos, Alumnos y Trabajos, Temas Dados, Materiales y Láminas.</text>
+                <text x="58" y="412" font-family="sans-serif" font-size="13" fill="#94a3b8">• Docente a cargo: Prof. Gustavo Coronel.</text>
+            </svg>
+        `);
+
+        const aboutPhotos = [
+            {
+                url: "brunotejeda.jpeg",
+                caption: "01 / Técnica 5 Berazategui"
+            },
+            {
+                url: brunoAvatarFallback,
+                caption: "02 / Ilustración de Perfil"
+            }
+        ];
+
+        const projectsData = [
+            {
+                id: "01",
+                title: "La 31 Bebidas",
+                client: "Emprendimiento Propio (@la31.bebidas)",
+                category: "App Web Serverless & Firebase",
+                year: "2026",
+                rarity: "En Producción",
+                liveUrl: "https://pedidosbebidas-b8b6c.web.app",
+                stack: ["HTML5", "CSS3", "JavaScript", "Firebase Auth", "Cloud Firestore", "Firebase Hosting"],
+                cover: bebidasOrdersMockup,
+                team: "Bruno Tejeda y Thiago Cuervo",
+                professor: "Prof. Gustavo Gómez",
+                summary: "Sistema de gestión para un emprendimiento de bebidas que permite registrar pedidos de clientes y controlar el stock disponible.",
+                highlights: [
+                    "Inicio de sesión con Google y reglas de seguridad en Firestore.",
+                    "Precio automático según producto y descuento atómico de stock.",
+                    "Cancelación lógica de pedidos con devolución automática al stock.",
+                    "Publicado en producción con sincronización en tiempo real."
+                ],
+                challenge: "El emprendimiento de venta de bebidas necesitaba digitalizar el control de inventario y el registro de pedidos de clientes en tiempo real. Al llevarlo manualmente, surgían errores de cálculo en los totales, falta de actualización inmediata del stock disponible entre distintos dispositivos y riesgo de perder el historial de ventas o cancelaciones.",
+                solution: "Desarrollamos una aplicación web serverless conectada a Google Firebase (Authentication con Google Sign-In, Cloud Firestore NoSQL y Firebase Hosting). Cada bebida tiene asignado su tamaño estandarizado, precio unitario y stock mínimo; al registrar un pedido, la app calcula el precio total automáticamente y ejecuta una transacción atómica que descuenta las unidades del stock y deja registro en el historial de movimientos. Además, implementamos borrado lógico: los pedidos nunca se eliminan, sino que pasan a estado 'Cancelado' devolviendo las unidades al inventario, todo respaldado por reglas de seguridad en firestore.rules.",
+                gallery: [
+                    { url: bebidasOrdersMockup, label: "Registro de Pedidos & Precio Automático" },
+                    { url: bebidasStockMockup, label: "Panel de Stock en Tiempo Real & Alertas" },
+                    { url: bebidasArchMockup, label: "Arquitectura Serverless & Reglas Firestore" }
+                ],
+                files: [
+                    { name: "App en vivo — pedidosbebidas-b8b6c.web.app", type: "WEB", size: "Abrir online", url: "https://pedidosbebidas-b8b6c.web.app" },
+                    { name: "Versión local (sin Node)", type: "LOCAL", size: "Abrir local", url: "./proyectos/la31bebidas/index.html" }
+                ]
+            },
+            {
+                id: "02",
+                title: "Forrajería Mis Viejos",
+                client: "Forrajería Mis Viejos (Gestión Interna)",
+                category: "Sistema Web de Gestión",
+                year: "2026",
+                rarity: "Gestión Comercial",
+                liveUrl: "./proyectos/forrajeria/index.html",
+                stack: ["HTML5", "CSS3", "JavaScript", "LocalStorage", "WhatsApp API", "JSON Backup"],
+                cover: "./forrajeria-portada.jpg",
+                team: "Bruno Tejeda y Thiago Cuervo",
+                professor: "Prof. Gustavo Gómez",
+                summary: "Sistema de gestión comercial para una forrajería con catálogo de productos, control de inventario y pedidos a distribuidoras.",
+                highlights: [
+                    "4 módulos integrados: Catálogo, Inventario, Distribuidoras y Pedidos.",
+                    "Alertas automáticas cuando un producto baja del stock mínimo.",
+                    "Envío directo de pedidos a distribuidoras por WhatsApp.",
+                    "100% offline con exportación e importación de respaldo JSON."
+                ],
+                challenge: "Un comercio de forrajería necesitaba organizar su catálogo de alimentos, semillas y accesorios, controlar el stock mínimo de cada producto y agilizar los pedidos a distribuidoras sin depender de planillas manuales ni de una conexión permanente a internet.",
+                solution: "Construimos un sistema web 100% offline en HTML5, CSS3 y JavaScript estructurado en 4 módulos integrados: Catálogo con filtros por categoría y buscador instantáneo, Gestión de Inventario con alertas automáticas cuando un artículo baja del stock mínimo, agenda de Distribuidoras con datos de contacto y un módulo de Pedidos que arma el detalle con total estimado y permite enviarlo directamente por WhatsApp. Toda la información persiste en localStorage e incluye exportación e importación de respaldos en formato JSON.",
+                gallery: [
+                    { url: forrajeriaCatalogoMockup, label: "Catálogo de Productos & Alertas de Stock" },
+                    { url: forrajeriaPedidosMockup, label: "Pedidos por WhatsApp & Respaldo JSON" }
+                ],
+                files: [
+                    { name: "Abrir Forrajería Mis Viejos", type: "APP", size: "100% Offline", url: "./proyectos/forrajeria/index.html" },
+                    { name: "Ver código JS (app.js)", type: "JS", size: "29 KB", url: "./proyectos/forrajeria/app.js" }
+                ]
+            },
+            {
+                id: "03",
+                title: "Plataforma Cursos SyM",
+                client: "Cursos SyM — Plataforma Educativa Online",
+                category: "Full-Stack PWA & Pagos",
+                year: "2026",
+                rarity: "Full-Stack",
+                liveUrl: "https://plataforma-cursos-sym.onrender.com",
+                stack: ["HTML5", "CSS3", "JavaScript", "PWA", "Node.js", "Express", "Firebase", "Mercado Pago", "Cloudinary"],
+                cover: cursosSymMockup,
+                team: "Bruno Tejeda y Thiago Cuervo",
+                professor: "Prof. Gustavo Gómez",
+                summary: "Plataforma educativa pensada para ofrecer y administrar cursos online con inscripción y acceso para estudiantes.",
+                highlights: [
+                    "Aplicación web progresiva (PWA) instalable con Service Worker.",
+                    "Backend en Node.js + Express con Firebase Admin SDK.",
+                    "Integración de cobros online con Mercado Pago.",
+                    "Almacenamiento multimedia optimizado mediante Cloudinary."
+                ],
+                challenge: "Se requería desarrollar una plataforma educativa moderna capaz de ofrecer y administrar cursos online, permitiendo gestionar contenidos multimedia, procesar inscripciones con pagos digitales seguros y brindar una experiencia fluida tanto en computadora como en dispositivos móviles.",
+                solution: "Implementamos una aplicación web progresiva (PWA) full-stack con frontend en HTML5, CSS3, JavaScript y Service Worker, conectada a un backend en Node.js y Express. La arquitectura integra Firebase Admin SDK para la gestión de datos y usuarios, Cloudinary para el almacenamiento optimizado de imágenes y videos de las clases, y la API de Mercado Pago para habilitar cobros online seguros con activación de acceso a los cursos.",
+                gallery: [
+                    { url: cursosSymMockup, label: "Arquitectura Full-Stack — Cursos SyM" }
+                ],
+                files: [
+                    { name: "Abrir Plataforma Cursos SyM en vivo (Render)", type: "WEB", size: "Render", url: "https://plataforma-cursos-sym.onrender.com" },
+                    { name: "Repositorio en GitHub — Plataforma_Cursos_SyM", type: "GIT", size: "Ver código", url: "https://github.com/sebasbel2007/Plataforma_Cursos_SyM" }
+                ]
+            },
+            {
+                id: "04",
+                title: "Viajes Los Choris",
+                client: "Olimpiadas 2026 — E.E.S.T. N° 5",
+                category: "E-Commerce Turismo & Figma",
+                year: "Mar - Abr 2026",
+                rarity: "Olimpiadas 2026",
+                liveUrl: "./proyectos/viajes-los-choris/index.html",
+                stack: ["HTML5", "Tailwind CSS", "JavaScript", "Figma Make", "LocalStorage", "SQL / DER"],
+                cover: travelHeroMockup,
+                team: "Bruno Tejeda (Presentador), Selena Ruiz Díaz, Facundo Torres y Nicolás González",
+                professor: "Olimpiadas 2026 — E.E.S.T. N° 5 de Berazategui",
+                summary: "Tienda online de una empresa de turismo para buscar destinos, armar paquetes con alojamiento y comprar pasajes.",
+                highlights: [
+                    "Prototipado en Figma Make y recreado en web funcional.",
+                    "Buscador por origen, destino y fecha + Super Ofertas hasta 30% OFF.",
+                    "Carrito interactivo con ajuste de pasajeros, impuestos y descuentos.",
+                    "Flujo de checkout completo con código de confirmación."
+                ],
+                challenge: "En el marco de las Olimpiadas 2026 de la E.E.S.T. N° 5, una empresa de turismo necesitaba lanzar un canal digital moderno para vender pasajes, hoteles y paquetes turísticos completos online, integrando desde la búsqueda de rutas hasta el proceso de pago de forma intuitiva.",
+                solution: "Prototipamos las interfaces principales en Figma Make y las llevamos a una aplicación web funcional que une la página de inicio con el carrito de compras mediante persistencia local. Incluye buscador por origen, destino y fecha, sección de Super Ofertas con descuentos de hasta el 30%, catálogo de hoteles y destinos destacados, y un carrito interactivo con ajuste de pasajeros, cálculo automático de impuestos (8%) y descuentos, formulario de pasajero y código de confirmación de reserva.",
+                gallery: [
+                    { url: travelHeroMockup, label: "Home — Buscador, Ofertas, Hoteles y Destinos" },
+                    { url: travelCartMockup, label: "Carrito de Compras & Checkout" }
+                ],
+                files: [
+                    { name: "Abrir Viajes Los Choris (Home + Carrito)", type: "APP", size: "Abrir web", url: "./proyectos/viajes-los-choris/index.html" },
+                    { name: "Diseño Figma — Home Page", type: "FIGMA", size: "Figma Make", url: "https://www.figma.com/make/nHXQYdkJzz0kNE4fhxpsoc/Home-page-for-travel-company" }
+                ]
+            },
+            {
+                id: "05",
+                title: "Proyecto PERROBOT",
+                client: "E.E.S.T. N° 5 de Berazategui — Prof. Erica Moreira",
+                category: "Robótica, Arduino & 3D",
+                year: "2026",
+                rarity: "Hardware + 3D",
+                liveUrl: "",
+                stack: ["Arduino Nano", "C++ / Arduino IDE", "Servo SG90", "Impresión 3D", "DFD / UML / DER"],
+                cover: "./perrobot.jpg",
+                team: "Bruno Tejeda (Documentación técnica), Nicolás González (Arduino) y Selena Ruiz Díaz (Armado 3D)",
+                professor: "Prof. Erica Moreira — E.E.S.T. N° 5 de Berazategui",
+                summary: "Prototipo de perro robot interactivo capaz de encender sus ojos, mover la cola y emitir ladridos.",
+                highlights: [
+                    "Carcasa completa diseñada e impresa en 3D (5 archivos .STL).",
+                    "Control con Arduino Nano: 2 LEDs con resistencias de 220 Ω.",
+                    "Servomotor SG90 calibrado de 60° a 120° y buzzer con doble ladrido.",
+                    "Documentación técnica de 15 páginas (Gantt, Flujo, DFD, UML y DER)."
+                ],
+                challenge: "El desafío fue llevar la programación estructurada fuera de la pantalla diseñando, ensamblando y programando un prototipo físico de perro robot impreso en 3D con Arduino Nano. Durante el desarrollo resolvimos la protección eléctrica de los LEDs, la calibración angular de la cola para evitar choques con la carcasa y el ordenamiento del cableado interno.",
+                solution: "Integramos 5 piezas impresas en 3D (.STL) con una placa Arduino Nano que gobierna 2 LEDs rojos con resistencias limitadoras de 220 Ω en los pines D10 y D11, un servomotor SG90 en D3 (PWM) calibrado entre 60° y 120° para el movimiento oscilante de la cola, y un buzzer en D2 que sintetiza un doble ladrido (550 Hz y 420 Hz). Además, elaboramos la documentación técnica integral de 15 páginas con diagrama de Gantt de 8 semanas, flujo del sistema, DFD Nivel 0 y 1, Casos de Uso UML, DER y código fuente en Arduino IDE.",
+                gallery: [
+                    { url: "./perrobot.jpg", label: "Prototipo Real — PERROBOT impreso en 3D" },
+                    { url: perrobotCircuitMockup, label: "Esquema Electrónico — Arduino Nano, Servo, LEDs y Buzzer" },
+                    { url: perrobotCodeMockup, label: "Código Fuente en Arduino IDE (PERROBOT.ino)" }
+                ],
+                files: [
+                    { name: "Partes 3D — Archivos de las piezas (.STL)", type: "STL", size: "5 Piezas 3D", url: "./proyectos/perrobot/partes-3d.html" },
+                    { name: "Documentación Técnica Integral (Ver en pantalla)", type: "DOC", size: "Abrir guía", url: "./proyectos/perrobot/documentacion.html" },
+                    { name: "Código Fuente — PERROBOT.ino", type: "INO", size: "Arduino Nano" }
+                ]
+            },
+            {
+                id: "06",
+                title: "Tech List",
+                client: "Aplicación Móvil para Profesores de Taller",
+                category: "App Móvil Android (APK)",
+                year: "2026",
+                rarity: "App Android",
+                liveUrl: "https://drive.google.com/file/d/1SON3DzCoYj2l-pQfDYf0KLUmJJXf3KyC/view?usp=drive_link",
+                stack: ["Android (APK)", "Investigación de Campo", "Gestión Escolar", "Seguimiento de Alumnos"],
+                cover: techListAppMockup,
+                team: "Bruno Tejeda y Nicolás Caballero",
+                professor: "Prof. Gustavo Coronel",
+                summary: "Aplicación móvil pensada para profesores de taller que centraliza cursos, seguimiento de alumnos, láminas, temas dictados y entrega de materiales.",
+                highlights: [
+                    "Cursos y Materias: cronograma completo y acceso rápido por curso.",
+                    "Alumnos y Trabajos: seguimiento individual de entregas y calificaciones.",
+                    "Materiales Entregados: control preciso de insumos asignados a cada alumno.",
+                    "Módulo de Láminas (Lenguajes Tecnológicos) y registro ágil de Temas Dados."
+                ],
+                challenge: "A partir de una investigación de campo con entrevistas directas y observación en clase a profesores de taller, detectamos cuatro problemáticas críticas: caos de papeles y dispersión en múltiples apps, falta de seguimiento individual de entregas y láminas por alumno, pérdida de control sobre materiales e insumos entregados en el taller, y ausencia de trazabilidad sobre los contenidos y tareas ya dictadas por curso.",
+                solution: "Diseñamos y desarrollamos Tech List, una aplicación móvil Android a medida pensada exclusivamente para simplificar la rutina diaria del docente de taller y eliminar el uso de papel. La app centraliza toda la gestión en 5 módulos integrados: Cursos y Materias (cronograma en una sola pantalla), Alumnos y Trabajos (seguimiento inmediato de entregas y calificaciones), Temas Dados (registro ágil de contenidos y tareas pendientes), Materiales Entregados (control preciso del stock asignado a cada estudiante) y el Módulo de Láminas especializado para Lenguajes Tecnológicos.",
+                gallery: [
+                    { url: techListAppMockup, label: "Tech List — Módulos de Gestión para Profesores de Taller" }
+                ],
+                files: [
+                    { name: "Descargar App Android — TechList.apk (Google Drive)", type: "APK", size: "Google Drive", url: "https://drive.google.com/file/d/1SON3DzCoYj2l-pQfDYf0KLUmJJXf3KyC/view?usp=drive_link" },
+                    { name: "Carpeta de Campo — Investigación (PDF)", type: "PDF", size: "Ver / Descargar", url: "./proyectos/tech-list/Carpeta_de_Campo_TechList.pdf" }
+                ]
+            },
+            {
+                id: "07",
+                title: "Auto Robot TPR (Tu Primer Robot)",
+                client: "E.E.S.T. N° 5 de Berazategui — Robótica Educativa",
+                category: "Robótica, Electrónica & MiniBloq",
+                year: "2026",
+                rarity: "Robótica",
+                liveUrl: "./proyectos/tpr/Guia_Armado_Auto_Robot_TPR.pdf",
+                stack: ["Robótica TPR", "Electrónica", "MiniBloq v0.82", "Motores M0/M1", "Guía Didáctica"],
+                cover: "./tpr-robot.jpg",
+                team: "Bruno Tejeda, Nicolás González y Selena Ruiz Díaz",
+                professor: "Prof. Erica Moreira — E.E.S.T. N° 5 de Berazategui",
+                summary: "Capacitación práctica y guía paso a paso de un auto robot educativo pensado para docentes sin conocimientos previos de programación.",
+                highlights: [
+                    "Capacitación destinada a profesoras sin experiencia previa en programación.",
+                    "Guía visual de armado mecánico en 7 pasos con chasis, rueda loca y 2 motores.",
+                    "Cableado claro de placa controladora: alimentación 5V (+/−), M0/M1 y USB.",
+                    "Prácticas iniciales en MiniBloq v0.82: movimiento recto, reversa y tiempos."
+                ],
+                challenge: "Se nos asignó preparar una capacitación utilizando kits educativos de robótica y programación básica dirigida a profesoras que no tenían conocimientos previos de programación. El reto era explicar el armado, el cableado y la lógica de movimiento de manera simple, visual y sin tecnicismos difíciles.",
+                solution: "Elegimos construir el Auto Robot TPR (Tu Primer Robot) como proyecto práctico y elaboramos una guía didáctica de 11 páginas pensada para principiantes: cubre el inventario de piezas, los 7 pasos de ensamblaje, el esquema de conexión de la placa controladora (5V y motores M0/M1) y actividades guiadas en MiniBloq v0.82 para programar movimiento recto, reversa y detención temporizada.",
+                gallery: [
+                    { url: "./tpr-robot.jpg", label: "TPR — Tu Primer Robot (Auto Robot Educativo)" }
+                ],
+                files: [
+                    { name: "Guía de Armado y Programación TPR (PDF · 11 Págs)", type: "PDF", size: "Ver / Descargar", url: "./proyectos/tpr/Guia_Armado_Auto_Robot_TPR.pdf" }
+                ]
+            },
+            {
+                id: "08",
+                title: "ParkingTech",
+                client: "Sistema Inteligente de Control de Estacionamiento",
+                category: "IoT, Sensores & Control de Acceso",
+                year: "2026",
+                rarity: "IoT / Smart Parking",
+                liveUrl: "./proyectos/parkingtech/Presentacion_ParkingTech.pdf",
+                stack: ["Sensores Independientes", "Controlador Central", "LEDs Indicadores", "Mapa Digital", "Barrera Automática"],
+                cover: "./parkingtech-portada.png",
+                team: "Bruno Tejeda",
+                professor: "E.E.S.T. N° 5 de Berazategui",
+                summary: "Sistema inteligente de monitoreo de plazas y control automático de capacidad para estacionamientos con indicadores LED y mapa digital en tiempo real.",
+                highlights: [
+                    "Detección independiente por plaza y en la entrada mediante sensores.",
+                    "Indicadores físicos con LEDs en cada cochera y en el acceso principal.",
+                    "Mapa digital en pantalla en la entrada actualizado por el controlador central.",
+                    "Barrera automática condicionada: solo se levanta si el contador de plazas libres es mayor a cero."
+                ],
+                challenge: "Los estacionamientos suelen sufrir caos vehicular en los ingresos y egresos porque los conductores no saben qué plazas están libres, obligándolos a circular dando vueltas innecesarias y generando demoras y congestión.",
+                solution: "Diseñamos ParkingTech, un sistema integral de monitoreo y control de acceso: cada plaza cuenta con un sensor independiente que detecta la presencia del vehículo y transmite su estado al controlador central. Este actualiza en vivo los indicadores LED físicos, el mapa digital en pantalla en la entrada y habilita la barrera de acceso únicamente cuando existen lugares disponibles.",
+                gallery: [
+                    { url: "./proyectos/parkingtech/slide-1.png", label: "Diapositiva 1 — ParkingTech" },
+                    { url: "./proyectos/parkingtech/slide-2.png", label: "Diapositiva 2 — Problemática" },
+                    { url: "./proyectos/parkingtech/slide-3.png", label: "Diapositiva 3 — Sistema de Monitoreo" },
+                    { url: "./proyectos/parkingtech/slide-4.png", label: "Diapositiva 4 — Propuesta y Solución" },
+                    { url: "./proyectos/parkingtech/slide-5.png", label: "Diapositiva 5 — Detección y Sensores" },
+                    { url: "./proyectos/parkingtech/slide-6.png", label: "Diapositiva 6 — Transmisión de Datos" },
+                    { url: "./proyectos/parkingtech/slide-7.png", label: "Diapositiva 7 — Control de Acceso" },
+                    { url: "./proyectos/parkingtech/slide-8.png", label: "Diapositiva 8 — Funcionamiento del Sistema" },
+                    { url: "./proyectos/parkingtech/slide-9.png", label: "Diapositiva 9 — Cierre" }
+                ],
+                files: [
+                    { name: "Presentación Completa ParkingTech (PDF · 9 Págs)", type: "PDF", size: "Ver / Descargar", url: "./proyectos/parkingtech/Presentacion_ParkingTech.pdf" },
+                    { name: "Ver presentación original en Canva", type: "CANVA", size: "Canva", url: "https://canva.link/uisehwjuyh9fk7u" }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // 2. ESTADO E INICIALIZACIÓN
+        // =========================================================================
+        let currentPhotoIndex = 0;
+        let currentBarberIndex = 0;
+        let projectsDealt = false;
+        let isDealing = false;
+
+        const makeBarberPlaceholder = (title, subtitle) => "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220">
+                <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1938"/><stop offset="100%" stop-color="#09080f"/></linearGradient></defs>
+                <rect width="400" height="220" fill="url(#bg)"/>
+                <circle cx="330" cy="40" r="65" fill="#f59e0b" fill-opacity="0.14"/>
+                <text x="200" y="92" text-anchor="middle" font-size="34">✂️</text>
+                <text x="200" y="128" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="#fde68a">${title}</text>
+                <text x="200" y="150" text-anchor="middle" font-family="monospace" font-size="11" fill="#94a3b8">${subtitle}</text>
+            </svg>
+        `);
+
+        const barberPhotos = [
+            { url: "./barberia-1.jpg", caption: "01 / Degradado clásico" },
+            { url: "./barberia-2.jpg", caption: "02 / Corte con diseño" }
+        ];
+
+        function updateBarberPhotoUI() {
+            const img = document.getElementById("barber-photo");
+            const cap = document.getElementById("barber-caption");
+            const dots = document.getElementById("barber-dots");
+            if (!img || !barberPhotos.length) return;
+            img.src = barberPhotos[currentBarberIndex].url;
+            cap.textContent = barberPhotos[currentBarberIndex].caption;
+            dots.innerHTML = barberPhotos.map((_, i) =>
+                `<span class="w-1.5 h-1.5 rounded-full ${i === currentBarberIndex ? 'bg-amber-400 w-3' : 'bg-white/40'}"></span>`
+            ).join("");
+        }
+
+        function changeBarberPhoto(dir) {
+            currentBarberIndex = (currentBarberIndex + dir + barberPhotos.length) % barberPhotos.length;
+            updateBarberPhotoUI();
+        }
+
+        function handleBarberPhotoUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            const loaded = [];
+            files.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    loaded.push({ url: e.target.result, caption: `0${idx + 1} / Barbería` });
+                    if (loaded.length === files.length) {
+                        barberPhotos.length = 0;
+                        barberPhotos.push(...loaded);
+                        currentBarberIndex = 0;
+                        updateBarberPhotoUI();
+                        showToast(`${loaded.length} foto(s) cargadas en Barbería`);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            renderPhotoDots();
+            updateBarberPhotoUI();
+        });
+
+        function handleLocalPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                aboutPhotos[0].url = e.target.result;
+                aboutPhotos[0].caption = "01 / Bruno Tejeda";
+                currentPhotoIndex = 0;
+                updateAboutPhotoUI();
+                showToast("Foto cargada en la carta Sobre Mí");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // =========================================================================
+        // 3. FUNCIONES DE LAS 3 CARTAS "SOBRE MÍ" (CON ANIMACIÓN DESDE EL MAZO)
+        // =========================================================================
+        let isAnimatingAbout = false;
+        let aboutDealt = false;
+
+        function openAboutCard() {
+            if (isDealing || isAnimatingAbout) return;
+            if (aboutDealt) {
+                closeAboutCard();
+                return;
+            }
+            isAnimatingAbout = true;
+
+            const deckEl = document.getElementById("main-deck");
+            const aboutTable = document.getElementById("about-table");
+            const slots = Array.from(document.querySelectorAll(".about-card-slot"));
+
+            // Mostrar la sección en la mesa con las cartas ocultas para medir sus destinos
+            slots.forEach((slot) => slot.classList.add("opacity-0"));
+            aboutTable.classList.remove("hidden");
+            lucide.createIcons();
+            aboutTable.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            setTimeout(() => {
+                slots.forEach((slot, index) => {
+                    const launchDelay = index * 200;
+
+                    setTimeout(() => {
+                        const deckRect = deckEl.getBoundingClientRect();
+                        const targetRect = slot.getBoundingClientRect();
+
+                        // Retroceso físico en el mazo al lanzar cada carta
+                        deckEl.classList.remove("deck-recoil");
+                        void deckEl.offsetWidth;
+                        deckEl.classList.add("deck-recoil");
+
+                        // Crear carta voladora 3D desde el mazo
+                        const flyer = document.createElement("div");
+                        flyer.className = "flying-card-wrapper";
+                        flyer.style.left = `${deckRect.left}px`;
+                        flyer.style.top = `${deckRect.top}px`;
+                        flyer.style.width = `${deckRect.width}px`;
+                        flyer.style.height = `${deckRect.height}px`;
+                        flyer.style.transform = `translate3d(0px, 0px, 0px) rotate(${(index - 1) * 5}deg)`;
+
+                        const inner = document.createElement("div");
+                        inner.className = "flying-card-inner face-down";
+
+                        // Frente clonado de cada carta Sobre Mí
+                        const frontFace = document.createElement("div");
+                        frontFace.className = slot.className.replace("opacity-0", "") + " absolute inset-0 w-full h-full backface-hidden overflow-hidden";
+                        frontFace.innerHTML = slot.innerHTML;
+
+                        // Dorso del mazo
+                        const backFace = document.createElement("div");
+                        backFace.className = "absolute inset-0 w-full h-full backface-hidden rotate-y-180";
+                        backFace.innerHTML = buildCardBackHTML();
+
+                        inner.appendChild(frontFace);
+                        inner.appendChild(backFace);
+                        flyer.appendChild(inner);
+                        document.body.appendChild(flyer);
+                        lucide.createIcons();
+
+                        // Disparar vuelo y giro 3D de 180° hacia su lugar en la mesa
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                const deltaX = targetRect.left - deckRect.left;
+                                const deltaY = targetRect.top - deckRect.top;
+
+                                flyer.style.width = `${targetRect.width}px`;
+                                flyer.style.height = `${targetRect.height}px`;
+                                flyer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0px) rotate(0deg)`;
+                                inner.classList.remove("face-down");
+                                inner.classList.add("face-up");
+                            });
+                        });
+
+                        // Al aterrizar, revelar la carta interactiva real y limpiar el clon
+                        setTimeout(() => {
+                            slot.classList.remove("opacity-0");
+                            flyer.remove();
+
+                            if (index === slots.length - 1) {
+                                aboutDealt = true;
+                                isAnimatingAbout = false;
+                            }
+                        }, 730);
+                    }, launchDelay);
+                });
+            }, 150);
+        }
+
+        function closeAboutCard() {
+            if (isAnimatingAbout || !aboutDealt) return;
+            isAnimatingAbout = true;
+
+            const deckEl = document.getElementById("main-deck");
+            const deckRect = deckEl.getBoundingClientRect();
+            const aboutTable = document.getElementById("about-table");
+            const slots = Array.from(document.querySelectorAll(".about-card-slot"));
+
+            // Recoger las 3 cartas en orden inverso volviendo boca abajo hacia el mazo
+            slots.slice().reverse().forEach((slot, revIdx) => {
+                const slotRect = slot.getBoundingClientRect();
+                const delay = revIdx * 110;
+
+                setTimeout(() => {
+                    slot.classList.add("opacity-0");
+
+                    const flyer = document.createElement("div");
+                    flyer.className = "flying-card-wrapper";
+                    flyer.style.left = `${slotRect.left}px`;
+                    flyer.style.top = `${slotRect.top}px`;
+                    flyer.style.width = `${slotRect.width}px`;
+                    flyer.style.height = `${slotRect.height}px`;
+                    flyer.style.transform = "translate3d(0px, 0px, 0px) rotate(0deg)";
+
+                    const inner = document.createElement("div");
+                    inner.className = "flying-card-inner face-up";
+
+                    const frontFace = document.createElement("div");
+                    frontFace.className = slot.className.replace("opacity-0", "") + " absolute inset-0 w-full h-full backface-hidden overflow-hidden";
+                    frontFace.innerHTML = slot.innerHTML;
+
+                    const backFace = document.createElement("div");
+                    backFace.className = "absolute inset-0 w-full h-full backface-hidden rotate-y-180";
+                    backFace.innerHTML = buildCardBackHTML();
+
+                    inner.appendChild(frontFace);
+                    inner.appendChild(backFace);
+                    flyer.appendChild(inner);
+                    document.body.appendChild(flyer);
+                    lucide.createIcons();
+
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            const deltaX = deckRect.left - slotRect.left;
+                            const deltaY = deckRect.top - slotRect.top;
+
+                            flyer.style.width = `${deckRect.width}px`;
+                            flyer.style.height = `${deckRect.height}px`;
+                            flyer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0px) rotate(0deg)`;
+                            inner.classList.remove("face-up");
+                            inner.classList.add("face-down");
+                        });
+                    });
+
+                    setTimeout(() => {
+                        flyer.remove();
+                        deckEl.classList.remove("deck-recoil");
+                        void deckEl.offsetWidth;
+                        deckEl.classList.add("deck-recoil");
+
+                        if (revIdx === slots.length - 1) {
+                            aboutTable.classList.add("hidden");
+                            slots.forEach((s) => s.classList.remove("opacity-0"));
+                            aboutDealt = false;
+                            isAnimatingAbout = false;
+                        }
+                    }, 680);
+                }, delay);
+            });
+        }
+
+        function changeAboutPhoto(direction) {
+            currentPhotoIndex = (currentPhotoIndex + direction + aboutPhotos.length) % aboutPhotos.length;
+            updateAboutPhotoUI();
+        }
+
+        function setAboutPhoto(index) {
+            currentPhotoIndex = index;
+            updateAboutPhotoUI();
+        }
+
+        function updateAboutPhotoUI() {
+            const photoEl = document.getElementById("about-photo");
+            const captionEl = document.getElementById("about-photo-caption");
+            
+            photoEl.style.opacity = "0.4";
+            setTimeout(() => {
+                photoEl.src = aboutPhotos[currentPhotoIndex].url;
+                captionEl.textContent = aboutPhotos[currentPhotoIndex].caption;
+                photoEl.style.opacity = "1";
+            }, 120);
+
+            renderPhotoDots();
+        }
+
+        function renderPhotoDots() {
+            const dotsContainer = document.getElementById("about-photo-dots");
+            dotsContainer.innerHTML = "";
+            aboutPhotos.forEach((_, idx) => {
+                const dot = document.createElement("button");
+                dot.onclick = () => setAboutPhoto(idx);
+                dot.className = `w-2 h-2 rounded-full transition-all cursor-pointer ${
+                    idx === currentPhotoIndex ? "bg-neonCyan w-4" : "bg-white/40 hover:bg-white/70"
+                }`;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function copyText(value, label) {
+            const tempInput = document.createElement("input");
+            tempInput.value = value;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast(`${label} copiado: ${value}`);
+        }
+
+        function copyEmail() {
+            copyText("brunotejeda008@gmail.com", "Email");
+        }
+
+        // Abre el Currículum Vitae real (PDF) directamente dentro del visor del mismo portfolio
+        function downloadCV() {
+            openProjectViewer("Currículum Vitae — Bruno Tejeda", "./Currículum Vitae.pdf");
+        }
+
+        // =========================================================================
+        // 4. FUNCIONES DE REPARTO FÍSICO DE CARTAS DE PROYECTOS (DESDE EL MAZO)
+        // =========================================================================
+        function buildProjectCardFrontHTML(proj) {
+            return `
+                <div>
+                    <!-- Cabecera de la Carta -->
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="font-mono text-xs font-bold text-neonViolet bg-neonViolet/15 px-2 py-0.5 rounded border border-neonViolet/30">
+                            #${proj.id}
+                        </span>
+                        <span class="font-mono text-[10px] tracking-wider text-amber-300/90 uppercase">
+                            ✦ ${proj.rarity}
+                        </span>
+                    </div>
+
+                    <!-- Arte / Portada del Proyecto -->
+                    <div class="relative w-full h-44 rounded-xl overflow-hidden bg-obsidian border border-white/10 mb-3">
+                        <img src="${proj.cover}" alt="${proj.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[10px] font-mono text-cyan-200 border border-white/10">
+                            ${proj.category}
+                        </div>
+                    </div>
+
+                    <!-- Título -->
+                    <h3 class="font-display text-base font-bold text-white group-hover:text-neonCyan transition-colors mb-1">
+                        ${proj.title}
+                    </h3>
+                    <p class="text-xs text-slate-400 line-clamp-2 mb-3">
+                        ${proj.summary || proj.challenge}
+                    </p>
+                </div>
+
+                <!-- Pie de Carta -->
+                <div class="pt-2.5 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-300 group-hover:text-white">
+                    <span>Inspeccionar carta</span>
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-neonViolet group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                </div>
+            `;
+        }
+
+        function buildCardBackHTML() {
+            return `
+                <div class="w-full h-full card-back-pattern rounded-2xl border-2 border-neonViolet/60 p-3 flex flex-col items-center justify-center shadow-2xl">
+                    <div class="w-full h-full border border-amber-400/30 rounded-xl flex flex-col items-center justify-between p-2.5">
+                        <div class="w-full flex justify-between text-[9px] font-mono text-amber-300/70">
+                            <span>✦</span>
+                            <span>ARCANA</span>
+                            <span>✦</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-full border border-neonViolet/50 flex items-center justify-center">
+                            <div class="w-8 h-8 rotate-45 border border-neonCyan/60 flex items-center justify-center bg-obsidian/70">
+                                <span class="text-amber-300 text-xs -rotate-45">✦</span>
+                            </div>
+                        </div>
+                        <span class="font-display text-[10px] tracking-[0.2em] text-slate-300">EL MAZO</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function dealProjects() {
+            if (isDealing) return;
+
+            // Si ya estaban repartidas, primero las recogemos y volvemos a repartir
+            if (projectsDealt) {
+                resetDeck(true);
+                return;
+            }
+
+            isDealing = true;
+            const deckEl = document.getElementById("main-deck");
+            const tableSection = document.getElementById("projects-table");
+            const grid = document.getElementById("projects-grid");
+            const resetBtn = document.getElementById("btn-reset-deck");
+            const dealBtn = document.getElementById("btn-deal-projects");
+
+            dealBtn.classList.add("opacity-60", "pointer-events-none");
+            tableSection.classList.remove("hidden");
+            grid.innerHTML = "";
+
+            // 1. Crear primero los slots invisibles en la grilla para medir sus coordenadas exactas
+            const targetSlots = projectsData.map((proj) => {
+                const slot = document.createElement("div");
+                slot.onclick = () => openProjectModal(proj);
+                slot.className = "holo-card rounded-2xl bg-velvet border border-white/15 p-3.5 flex flex-col justify-between cursor-pointer select-none group opacity-0";
+                slot.innerHTML = buildProjectCardFrontHTML(proj);
+                grid.appendChild(slot);
+                return slot;
+            });
+
+            lucide.createIcons();
+
+            // Asegurar que la zona de la mesa sea visible antes de lanzar las cartas
+            tableSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            // 2. Lanzar cada carta una por una desde la posición exacta del mazo hacia su slot
+            setTimeout(() => {
+                projectsData.forEach((proj, index) => {
+                    const launchDelay = index * 220;
+
+                    setTimeout(() => {
+                        // Obtener coordenadas actuales del mazo y del slot destino
+                        const deckRect = deckEl.getBoundingClientRect();
+                        const targetSlot = targetSlots[index];
+                        const targetRect = targetSlot.getBoundingClientRect();
+
+                        // Efecto de retroceso en el mazo
+                        deckEl.classList.remove("deck-recoil");
+                        void deckEl.offsetWidth;
+                        deckEl.classList.add("deck-recoil");
+
+                        // Crear carta voladora 3D posicionada exactamente sobre el mazo
+                        const flyer = document.createElement("div");
+                        flyer.className = "flying-card-wrapper";
+                        flyer.style.left = `${deckRect.left}px`;
+                        flyer.style.top = `${deckRect.top}px`;
+                        flyer.style.width = `${deckRect.width}px`;
+                        flyer.style.height = `${deckRect.height}px`;
+                        flyer.style.transform = `translate3d(0px, 0px, 0px) rotate(${(index - 1.5) * 4}deg)`;
+
+                        const inner = document.createElement("div");
+                        inner.className = "flying-card-inner face-down";
+
+                        // Cara Frontal (Frente del proyecto)
+                        const frontFace = document.createElement("div");
+                        frontFace.className = "absolute inset-0 w-full h-full rounded-2xl bg-velvet border-2 border-neonViolet/70 p-3.5 flex flex-col justify-between backface-hidden shadow-2xl overflow-hidden";
+                        frontFace.innerHTML = buildProjectCardFrontHTML(proj);
+
+                        // Cara Trasera (Dorso del mazo)
+                        const backFace = document.createElement("div");
+                        backFace.className = "absolute inset-0 w-full h-full backface-hidden rotate-y-180";
+                        backFace.innerHTML = buildCardBackHTML();
+
+                        inner.appendChild(frontFace);
+                        inner.appendChild(backFace);
+                        flyer.appendChild(inner);
+                        document.body.appendChild(flyer);
+                        lucide.createIcons();
+
+                        // Forzar reflow y disparar vuelo + giro 3D hacia el slot destino
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                const deltaX = targetRect.left - deckRect.left;
+                                const deltaY = targetRect.top - deckRect.top;
+
+                                flyer.style.width = `${targetRect.width}px`;
+                                flyer.style.height = `${targetRect.height}px`;
+                                flyer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0px) rotate(0deg)`;
+                                inner.classList.remove("face-down");
+                                inner.classList.add("face-up");
+                            });
+                        });
+
+                        // Al aterrizar en su posición, fijar la carta real en la grilla y limpiar el clon volador
+                        setTimeout(() => {
+                            targetSlot.classList.remove("opacity-0");
+                            flyer.remove();
+
+                            if (index === projectsData.length - 1) {
+                                projectsDealt = true;
+                                isDealing = false;
+                                resetBtn.classList.remove("hidden");
+                                dealBtn.classList.remove("opacity-60", "pointer-events-none");
+                            }
+                        }, 730);
+
+                    }, launchDelay);
+                });
+            }, 180);
+        }
+
+        function resetDeck(redealAfter = false) {
+            if (isDealing) return;
+            isDealing = true;
+
+            const deckEl = document.getElementById("main-deck");
+            const tableSection = document.getElementById("projects-table");
+            const grid = document.getElementById("projects-grid");
+            const resetBtn = document.getElementById("btn-reset-deck");
+            const slots = Array.from(grid.children);
+
+            if (slots.length === 0) {
+                isDealing = false;
+                projectsDealt = false;
+                if (redealAfter) dealProjects();
+                return;
+            }
+
+            const deckRect = deckEl.getBoundingClientRect();
+
+            // Animar cada carta volviendo desde su posición en la mesa hacia el mazo boca abajo
+            slots.forEach((slot, index) => {
+                const slotRect = slot.getBoundingClientRect();
+                const proj = projectsData[index];
+
+                setTimeout(() => {
+                    slot.classList.add("opacity-0");
+
+                    const flyer = document.createElement("div");
+                    flyer.className = "flying-card-wrapper";
+                    flyer.style.left = `${slotRect.left}px`;
+                    flyer.style.top = `${slotRect.top}px`;
+                    flyer.style.width = `${slotRect.width}px`;
+                    flyer.style.height = `${slotRect.height}px`;
+                    flyer.style.transform = "translate3d(0px, 0px, 0px) rotate(0deg)";
+
+                    const inner = document.createElement("div");
+                    inner.className = "flying-card-inner face-up";
+
+                    const frontFace = document.createElement("div");
+                    frontFace.className = "absolute inset-0 w-full h-full rounded-2xl bg-velvet border border-white/20 p-3.5 flex flex-col justify-between backface-hidden overflow-hidden";
+                    frontFace.innerHTML = buildProjectCardFrontHTML(proj);
+
+                    const backFace = document.createElement("div");
+                    backFace.className = "absolute inset-0 w-full h-full backface-hidden rotate-y-180";
+                    backFace.innerHTML = buildCardBackHTML();
+
+                    inner.appendChild(frontFace);
+                    inner.appendChild(backFace);
+                    flyer.appendChild(inner);
+                    document.body.appendChild(flyer);
+                    lucide.createIcons();
+
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            const deltaX = deckRect.left - slotRect.left;
+                            const deltaY = deckRect.top - slotRect.top;
+
+                            flyer.style.width = `${deckRect.width}px`;
+                            flyer.style.height = `${deckRect.height}px`;
+                            flyer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0px) rotate(0deg)`;
+                            inner.classList.remove("face-up");
+                            inner.classList.add("face-down");
+                        });
+                    });
+
+                    setTimeout(() => {
+                        flyer.remove();
+                        deckEl.classList.remove("deck-recoil");
+                        void deckEl.offsetWidth;
+                        deckEl.classList.add("deck-recoil");
+
+                        if (index === slots.length - 1) {
+                            tableSection.classList.add("hidden");
+                            resetBtn.classList.add("hidden");
+                            grid.innerHTML = "";
+                            projectsDealt = false;
+                            isDealing = false;
+
+                            if (redealAfter) {
+                                dealProjects();
+                            } else {
+                                showToast("Cartas recogidas y barajadas en el mazo");
+                            }
+                        }
+                    }, 680);
+                }, index * 110);
+            });
+        }
+
+        // =========================================================================
+        // 5. MODAL DE VISTA DETALLADA DE PROYECTO
+        // =========================================================================
+        let activeProjectGallery = [];
+        let activeProjectImageIndex = 0;
+
+        function updateProjectGalleryUI() {
+            const item = activeProjectGallery[activeProjectImageIndex];
+            if (!item) return;
+            const mainImg = document.getElementById("modal-proj-main-img");
+            mainImg.style.opacity = "0.4";
+            setTimeout(() => {
+                mainImg.src = item.url;
+                document.getElementById("modal-proj-img-label").textContent = item.label;
+                document.getElementById("modal-proj-img-counter").textContent = `${activeProjectImageIndex + 1} / ${activeProjectGallery.length}`;
+                mainImg.style.opacity = "1";
+            }, 100);
+        }
+
+        function nextProjectImage() {
+            if (activeProjectGallery.length <= 1) return;
+            activeProjectImageIndex = (activeProjectImageIndex + 1) % activeProjectGallery.length;
+            updateProjectGalleryUI();
+        }
+
+        function prevProjectImage() {
+            if (activeProjectGallery.length <= 1) return;
+            activeProjectImageIndex = (activeProjectImageIndex - 1 + activeProjectGallery.length) % activeProjectGallery.length;
+            updateProjectGalleryUI();
+        }
+
+        function openProjectModal(proj) {
+            const modal = document.getElementById("project-modal");
+
+            document.getElementById("modal-proj-number").textContent = `#${proj.id}`;
+            document.getElementById("modal-proj-category").textContent = proj.category;
+            document.getElementById("modal-proj-year").textContent = proj.year;
+            document.getElementById("modal-proj-title").textContent = proj.title;
+            document.getElementById("modal-proj-client").textContent = `Cliente: ${proj.client}`;
+            document.getElementById("modal-proj-summary").textContent = proj.summary || "";
+            document.getElementById("modal-proj-team").textContent = proj.team || "Bruno Tejeda";
+            document.getElementById("modal-proj-professor").textContent = proj.professor || proj.client;
+            document.getElementById("modal-proj-challenge").textContent = proj.challenge;
+            document.getElementById("modal-proj-solution").textContent = proj.solution;
+
+            // Stack tecnológico
+            const stackContainer = document.getElementById("modal-proj-stack");
+            stackContainer.innerHTML = (proj.stack || [])
+                .map((tech) => `<span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-sky-200">${tech}</span>`)
+                .join("");
+
+            // Puntos clave en formato lista limpia (sin bloques)
+            const hlList = document.getElementById("modal-proj-highlights");
+            hlList.innerHTML = (proj.highlights || [])
+                .map((item) => `
+                    <li class="flex items-start gap-2.5">
+                        <span class="text-neonCyan font-bold mt-0.5">•</span>
+                        <span>${item}</span>
+                    </li>`)
+                .join("");
+
+            switchModalTab("overview");
+
+            // Botón principal abre el proyecto dentro del mismo portfolio; clic en la imagen abre el visor en grande
+            const openBtn = document.getElementById("modal-proj-open-btn");
+            const imgWrap = document.getElementById("modal-proj-img-wrap");
+            if (proj.liveUrl) {
+                openBtn.href = "#";
+                openBtn.removeAttribute("target");
+                openBtn.onclick = (e) => {
+                    e.preventDefault();
+                    openProjectViewer(proj.title, proj.liveUrl);
+                };
+                openBtn.classList.remove("hidden");
+            } else {
+                openBtn.classList.add("hidden");
+                openBtn.onclick = null;
+            }
+            imgWrap.onclick = () => openImageLightbox(
+                document.getElementById("modal-proj-main-img").src,
+                document.getElementById("modal-proj-img-label").textContent
+            );
+
+            // Cargar galería del proyecto (una imagen a la vez con botón siguiente a la derecha)
+            activeProjectGallery = proj.gallery || [];
+            activeProjectImageIndex = 0;
+            const mainImg = document.getElementById("modal-proj-main-img");
+            const imgLabel = document.getElementById("modal-proj-img-label");
+            const imgCounter = document.getElementById("modal-proj-img-counter");
+            const prevBtn = document.getElementById("modal-proj-prev-btn");
+            const nextBtn = document.getElementById("modal-proj-next-btn");
+
+            mainImg.src = activeProjectGallery[0].url;
+            imgLabel.textContent = activeProjectGallery[0].label;
+            imgCounter.textContent = `1 / ${activeProjectGallery.length}`;
+            prevBtn.classList.toggle("hidden", activeProjectGallery.length <= 1);
+            nextBtn.classList.toggle("hidden", activeProjectGallery.length <= 1);
+
+            // Cargar archivos adjuntos / enlaces reales
+            const filesContainer = document.getElementById("modal-proj-files");
+            filesContainer.innerHTML = "";
+
+            proj.files.forEach(file => {
+                const fileCard = document.createElement(file.url ? "a" : "div");
+                if (file.url) {
+                    if (file.download) {
+                        fileCard.href = file.url;
+                        fileCard.setAttribute("download", "");
+                    } else {
+                        fileCard.href = "#";
+                        fileCard.onclick = (e) => {
+                            e.preventDefault();
+                            openProjectViewer(`${proj.title} — ${file.name}`, file.url);
+                        };
+                    }
+                } else {
+                    fileCard.onclick = () => showToast(`Vista previa de ${file.name}`);
+                }
+                fileCard.className = "p-3 rounded-xl bg-obsidian hover:bg-obsidian/60 border border-white/10 hover:border-neonViolet/50 flex items-center justify-between cursor-pointer transition-all group";
+                fileCard.innerHTML = `
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="w-8 h-8 rounded-lg bg-neonViolet/15 text-neonViolet flex items-center justify-center font-mono text-[10px] font-bold flex-shrink-0">
+                            ${file.type}
+                        </div>
+                        <div class="truncate">
+                            <p class="text-xs font-medium text-slate-200 truncate group-hover:text-white">${file.name}</p>
+                            <p class="text-[10px] font-mono text-slate-500">${file.size}</p>
+                        </div>
+                    </div>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400 group-hover:text-neonCyan flex-shrink-0"></i>
+                `;
+                filesContainer.appendChild(fileCard);
+            });
+
+            document.getElementById("main-stage").classList.add("hidden");
+            modal.classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            lucide.createIcons();
+        }
+
+        function switchModalTab(tab) {
+            ["overview", "files"].forEach((t) => {
+                const el = document.getElementById(`mtab-${t}`);
+                if (el) el.classList.toggle("hidden", t !== tab);
+            });
+            document.querySelectorAll(".modal-tab-btn").forEach((btn) => {
+                const active = btn.dataset.mtab === tab;
+                btn.classList.toggle("bg-neonViolet", active);
+                btn.classList.toggle("text-white", active);
+                btn.classList.toggle("text-slate-400", !active);
+            });
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById("project-modal");
+            modal.classList.add("hidden");
+            document.getElementById("main-stage").classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function openImageLightbox(src, caption) {
+            const lb = document.getElementById("image-lightbox");
+            document.getElementById("lightbox-img").src = src;
+            document.getElementById("lightbox-caption").textContent = caption || "";
+            lb.classList.remove("hidden");
+            lb.classList.add("flex");
+            lucide.createIcons();
+        }
+
+        function closeImageLightbox() {
+            const lb = document.getElementById("image-lightbox");
+            lb.classList.add("hidden");
+            lb.classList.remove("flex");
+        }
+
+        function openProjectViewer(title, url) {
+            if (url.includes("github.com") || url.includes("drive.google.com") || url.includes("canva.link") || url.includes("canva.com")) {
+                window.open(url, "_blank", "noopener,noreferrer");
+                return;
+            }
+            const modal = document.getElementById("project-viewer-modal");
+            document.getElementById("viewer-title").textContent = title;
+            const dlBtn = document.getElementById("viewer-download-link");
+            if (url.toLowerCase().endsWith(".pdf")) {
+                dlBtn.href = url;
+                dlBtn.classList.remove("hidden");
+            } else {
+                dlBtn.classList.add("hidden");
+            }
+            document.getElementById("viewer-external-link").href = url;
+            document.getElementById("project-viewer-frame").src = url;
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            lucide.createIcons();
+        }
+
+        function closeProjectViewer() {
+            const modal = document.getElementById("project-viewer-modal");
+            document.getElementById("project-viewer-frame").src = "about:blank";
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeImageLightbox();
+                closeProjectViewer();
+            }
+        });
+
+        // =========================================================================
+        // 6. UTILIDADES UI
+        // =========================================================================
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toast-message");
+            toastMsg.textContent = msg;
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 2800);
+        }
+
+        // Cerrar modales al hacer clic fuera del contenido
+        window.addEventListener("click", (e) => {
+            const projectModal = document.getElementById("project-modal");
+            if (e.target === projectModal) closeProjectModal();
+        });
+    </script>
+</body>
+</html>
