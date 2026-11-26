@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentación Original — Proyecto PERROBOT</title>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f172a; color: #f8fafc; min-height: 100vh; }
+    .bar {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 12px 20px; background: #1e293b; border-bottom: 1px solid #334155;
+    }
+    .bar h1 { font-size: 0.95rem; font-weight: 700; }
+    .btn { padding: 8px 14px; border-radius: 10px; background: #3b82f6; color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 700; }
+    .btn:hover { background: #2563eb; }
+    #status { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.95rem; }
+    #docx-container { padding: 20px 10px 48px; }
+    .docx-wrapper { background: #0f172a !important; padding: 16px !important; }
+    .docx-wrapper > section.docx { box-shadow: 0 12px 35px rgba(0,0,0,0.5) !important; margin-bottom: 24px !important; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <h1>📄 Documentación Técnica Original — Proyecto PERROBOT (.DOCX)</h1>
+    <a class="btn" href="./Documentacion_Perrobot.docx" download>⬇ Descargar Word (.DOCX)</a>
+  </div>
+
+  <div id="status">Cargando documento Word original (15 páginas)...</div>
+  <div id="docx-container"></div>
+
+  <script src="./doc-data.js"></script>
+  <script>
+    (async () => {
+      const status = document.getElementById("status");
+      const container = document.getElementById("docx-container");
+      try {
+        if (!window.PERROBOT_DOCX_B64) throw new Error("No se encontró el archivo Word.");
+        const bin = atob(window.PERROBOT_DOCX_B64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        await docx.renderAsync(bytes.buffer, container, null, {
+          inWrapper: true,
+          ignoreWidth: false,
+          ignoreHeight: false,
+          breakPages: true,
+        });
+        status.style.display = "none";
+      } catch (err) {
+        console.error(err);
+        status.innerHTML = 'No se pudo previsualizar en este navegador. <a class="btn" href="./Documentacion_Perrobot.docx" download>Descargar Word (.DOCX)</a>';
+      }
+    })();
+  </script>
+</body>
+</html>
