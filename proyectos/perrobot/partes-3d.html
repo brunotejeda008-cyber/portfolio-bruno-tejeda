@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partes 3D (.STL) — Proyecto PERROBOT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      padding: 28px 20px;
+    }
+    .container { max-width: 1060px; margin: 0 auto; }
+    header { margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px; }
+    .tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(59,130,246,0.18); color: #38bdf8; font-family: monospace; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; }
+    h1 { font-size: 1.65rem; font-weight: 800; margin-bottom: 4px; }
+    p.sub { color: #94a3b8; font-size: 0.9rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); border-color: #3b82f6; }
+    .img-box {
+      background: #ffffff;
+      border-radius: 12px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .card h2 { font-size: 1rem; font-weight: 700; }
+    .card span { font-family: monospace; font-size: 0.78rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="tag">ARCHIVOS 3D (.STL) · IMPRESIÓN 3D</span>
+      <h1>Piezas 3D — Proyecto PERROBOT</h1>
+      <p class="sub">Conjunto de archivos .STL diseñados y preparados para la impresión 3D y ensamblaje del prototipo.</p>
+    </header>
+
+    <div class="grid">
+      <article class="card">
+        <div class="img-box"><img src="./pieza-1-cabeza.png" alt="Cabeza STL" /></div>
+        <div><h2>01. Cabeza</h2><span>cabeza_perrobot.stl · Alojamiento LEDs</span></div>
+      </article>
+      <article class="card">
+        <div class="img-box"><img src="./pieza-2-base.png" alt="Base inferior STL" /></div>
+        <div><h2>02. Base Inferior</h2><span>base_chasis.stl · Encastre patas y servos</span></div>
+      </article>
+      <article class="card">
+        <div class="img-box"><img src="./pieza-3-carcasa.png" alt="Carcasa superior STL" /></div>
+        <div><h2>03. Carcasa Superior</h2><span>carcasa_superior.stl · Cuerpo principal</span></div>
+      </article>
+      <article class="card">
+        <div class="img-box"><img src="./pieza-4-marco.png" alt="Marco interno STL" /></div>
+        <div><h2>04. Marco Interno</h2><span>marco_interno.stl · Soporte Arduino Nano</span></div>
+      </article>
+      <article class="card">
+        <div class="img-box"><img src="./pieza-5-cola.png" alt="Cola móvil STL" /></div>
+        <div><h2>05. Cola Móvil</h2><span>cola_servo.stl · Eje servomotor SG90</span></div>
+      </article>
+    </div>
+  </div>
+</body>
+</html>
